@@ -128,3 +128,5 @@ body[data-theme="blue"]{
 }
 
 .tool-card .deco{display:none !important}
+
+.tool-card .deco, .tool-card .tool-icon, .tool-card img{display:none !important}

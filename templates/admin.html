@@ -282,7 +282,7 @@ function openModal(type, index = -1) {
   document.getElementById('group-icon').style.display = 'none';
   if (type === 'banner') document.getElementById('group-link').style.display = 'block';
   // notice 也显示 desc，用于存点击后显示的内容
-  if (type === 'tool') { document.getElementById('group-icon').style.display = 'block'; document.getElementById('group-link').style.display = 'block'; }
+  if (type === 'tool') { document.getElementById('group-icon').style.display = 'none'; document.getElementById('group-link').style.display = 'block'; }
   if (index > -1) {
     let item = type === 'banner' ? tempData.banners[index] : type === 'notice' ? tempData.notices[index] : tempData.toolsTabs[currentToolTabIndex].cards[index];
     if (item) {
