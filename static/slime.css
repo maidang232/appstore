@@ -118,3 +118,11 @@ body[data-theme="blue"]{
 /* 分享图标下移，避免和状态栏重叠 */
 .top-bar .share-icon{top:62px!important}
 .top-bar .top-actions{top:62px!important}
+
+
+/* 卡片背景完整显示 */
+.tool-card, .notice-card, .swiper-item, .app-icon img {
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}

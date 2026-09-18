@@ -198,8 +198,15 @@ textarea{resize:vertical;min-height:80px}
     <div class="form-group" id="group-title"><label>标题</label><input id="edit-title" placeholder="输入标题"></div>
     <div class="form-group" id="group-desc"><label>简介 / 副标题</label><input id="edit-desc" placeholder="输入副标题"></div>
     <div class="form-group" id="group-link"><label>跳转链接 (可选)</label><input id="edit-link" placeholder="点击跳转到哪个网址"></div>
-    <div class="form-group" id="group-icon"><label>图标 Emoji</label><input id="edit-icon" placeholder="输入一个 Emoji"></div>
-    <div class="form-group"><label>背景图片</label><input type="file" id="edit-image-input" style="display:none" onchange="uploadImage()"><div class="upload-preview" id="edit-preview" onclick="document.getElementById('edit-image-input').click()"><span>点击上传背景图片</span></div><input type="hidden" id="edit-image-url"></div>
+    <div class="form-group" id="group-icon"><label>图标 Emoji</label><input id="edit-icon" placeholder="输入一个 Emoji">
+<input type="file" id="edit-icon-file" accept="image/*" style="display:none" onchange="uploadIcon()">
+<button type="button" class="btn-add" style="margin-top:6px" onclick="document.getElementById('edit-icon-file').click()">📷 上传图标（1:1 PNG）</button>
+<div id="edit-icon-preview" style="width:60px;height:60px;background-size:contain;background-repeat:no-repeat;background-position:center;border-radius:8px;margin-top:8px;background-color:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px">未设置</div>
+<input id="edit-icon-url" type="hidden">
+<button type="button" class="btn-danger" style="margin-top:6px;font-size:11px;padding:4px 10px" onclick="clearIcon()">清除图标</button></div>
+    <div class="form-group"><label>背景图片</label><input type="file" id="edit-image-input" style="display:none" onchange="uploadImage()"><div class="upload-preview" id="edit-preview" onclick="document.getElementById('edit-image-input').click()"><span>点击上传背景图片</span></div>
+<button type="button" class="btn-danger" style="margin-top:6px;font-size:11px;padding:4px 10px" onclick="clearCardBg()">清除背景图</button>
+<div style="margin-top:12px"><label style="font-size:13px;font-weight:600;color:#333">背景显示方式</label><select id="edit-bg-fit" style="width:100%;padding:10px;border-radius:8px;border:1.5px solid #e8eaf0;background:#fafbfd;font-size:13px"><option value="contain">完整显示</option><option value="cover">铺满</option><option value="100% 100%">拉伸</option></select></div><input type="hidden" id="edit-image-url"></div>
     <div class="form-group"><label>图片位置调整</label><select id="edit-position"><option value="center center">居中</option><option value="top center">靠上</option><option value="bottom center">靠下</option><option value="center left">靠左</option><option value="center right">靠右</option></select></div>
     <div class="form-group"><label>背景颜色</label><div class="color-picker-row"><input type="color" id="edit-color" value="#f0f0f0"><span class="color-text" id="color-text">#f0f0f0</span></div></div>
     <button class="btn btn-primary" style="width:100%;padding:14px" onclick="saveItem()">保存此项</button>
@@ -247,6 +254,16 @@ async function uploadImage() {
   } else { alert('上传失败'); }
 }
 
+
+async function uploadIcon(){
+  var fi=document.getElementById('edit-icon-file'); var f=fi.files[0]; if(!f)return;
+  var fd=new FormData(); fd.append('file',f);
+  var res=await fetch('/api/upload',{method:'POST',headers:{'X-Admin-Token':'admin123'},body:fd});
+  var data=await res.json();
+  if(data.url){document.getElementById('edit-icon-url').value=data.url;var pv=document.getElementById('edit-icon-preview');pv.style.backgroundImage='url('+data.url+')';pv.innerHTML='';}
+}
+function clearIcon(){document.getElementById('edit-icon-url').value='';var pv=document.getElementById('edit-icon-preview');pv.style.backgroundImage='';pv.innerHTML='未设置';}
+function clearCardBg(){document.getElementById('edit-image-url').value='';var pv=document.getElementById('edit-preview');pv.style.backgroundImage='';pv.innerHTML='<span>点击上传背景图片</span>';}
 function openModal(type, index = -1) {
   editType = type; editIndex = index;
   document.getElementById('modal-title').innerText = (index === -1 ? '添加' : '编辑') + (type === 'banner' ? '轮播图' : type === 'notice' ? '公告卡片' : '工具卡片');
@@ -295,7 +312,9 @@ function saveItem() {
     icon: document.getElementById('edit-icon').value || '★',
     bg: document.getElementById('edit-image-url').value,
     position: document.getElementById('edit-position').value,
-    color: document.getElementById('edit-color').value
+    color: document.getElementById('edit-color').value,
+    icon_url: document.getElementById('edit-icon-url').value,
+    bg_fit: document.getElementById('edit-bg-fit') ? document.getElementById('edit-bg-fit').value : 'contain'
   };
   if (editType === 'banner') { if (editIndex > -1) tempData.banners[editIndex] = newItem; else tempData.banners.push(newItem); renderList('banner'); }
   else if (editType === 'notice') { if (editIndex > -1) tempData.notices[editIndex] = newItem; else tempData.notices.push(newItem); renderList('notice'); }
@@ -390,7 +409,7 @@ function renderToolCards() {
 
 async function saveAll(configKey, type) {
   let items = type === 'banner' ? tempData.banners : tempData.notices;
-  const formatted = items.map(item => ({ title: item.title, desc: item.desc || '', sub: item.desc || '', content: item.desc || '', link: item.link || '', icon: item.icon || '', bg: item.bg || '', image: item.bg || '', position: item.position || 'center', color: item.color || '#f0f0f0' }));
+  const formatted = items.map(item => ({ title: item.title, desc: item.desc || '', sub: item.desc || '', content: item.desc || '', link: item.link || '', icon: item.icon || '', bg: item.bg || '', image: item.bg || '', position: item.position || 'center', color: item.color || '#f0f0f0', icon_url: item.icon_url || '', bg_fit: item.bg_fit || 'contain' }));
   await fetch('/api/config', { method:'POST', headers:H, body:JSON.stringify({ [configKey]: formatted })});
   alert('保存成功！');
 }
