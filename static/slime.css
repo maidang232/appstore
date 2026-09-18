@@ -1,13 +1,44 @@
 /* ============ Slime 斯莱姆主题 ============ */
-body, body[data-theme], body[data-theme="light"], body[data-theme="dark"], body[data-theme="gold"], body[data-theme="red"], body[data-theme="purple"], body[data-theme="blue"]{
+:root, body, body[data-theme="light"]{
   --bg:#EAF5DC;--card-bg:#fff;--text:#1B3A0E;--text-sub:#5B8A3A;--text-light:#9CCC65;
   --border:#D6EAB9;--border-2:#C1E0A0;--primary:#7CB342;--primary-text:#fff;
   --top-bg:#7CB342;--top-text:#fff;--icon-bg:#7CB342;--icon-text:#fff;
   --shadow:0 4px 16px rgba(124,179,66,.18);
   --grad:linear-gradient(135deg,#AED581 0%,#7CB342 50%,#558B2F 100%);
 }
+body[data-theme="dark"]{
+  --bg:#0F1A08;--card-bg:#1A2910;--text:#DCEFC6;--text-sub:#9CCC65;--text-light:#558B2F;
+  --border:#2A3D18;--border-2:#3A4D28;--top-bg:#1A2910;--top-text:#DCEFC6;
+  --icon-bg:#7CB342;--icon-text:#fff;
+  --grad:linear-gradient(135deg,#2E4A1A 0%,#0F1A08 100%);
+  --shadow:0 4px 16px rgba(0,0,0,.4);
+}
+body[data-theme="gold"]{
+  --bg:#F5EFD8;--card-bg:#fff;--text:#3A2E0E;--text-sub:#8B7A3A;--text-light:#C9A44B;
+  --border:#E8DFB9;--border-2:#D6C89A;--primary:#C9A44B;--primary-text:#fff;
+  --top-bg:#C9A44B;--top-text:#fff;--icon-bg:#C9A44B;--icon-text:#fff;
+  --grad:linear-gradient(135deg,#E8DFB9 0%,#C9A44B 100%);
+}
+body[data-theme="red"]{
+  --bg:#F5E0E0;--card-bg:#fff;--text:#3A0E0E;--text-sub:#8B3A3A;--text-light:#C94B4B;
+  --border:#E8B9B9;--border-2:#D69A9A;--primary:#C94B4B;--primary-text:#fff;
+  --top-bg:#C94B4B;--top-text:#fff;--icon-bg:#C94B4B;--icon-text:#fff;
+  --grad:linear-gradient(135deg,#E8B9B9 0%,#C94B4B 100%);
+}
+body[data-theme="purple"]{
+  --bg:#EAE0F5;--card-bg:#fff;--text:#2A0E3A;--text-sub:#6B3A8B;--text-light:#9A4BC9;
+  --border:#D6B9E8;--border-2:#C19AD6;--primary:#8B5CF6;--primary-text:#fff;
+  --top-bg:#8B5CF6;--top-text:#fff;--icon-bg:#8B5CF6;--icon-text:#fff;
+  --grad:linear-gradient(135deg,#C19AD6 0%,#8B5CF6 100%);
+}
+body[data-theme="blue"]{
+  --bg:#E0EEF5;--card-bg:#fff;--text:#0E2A3A;--text-sub:#3A6B8B;--text-light:#4B9AC9;
+  --border:#B9D6E8;--border-2:#9AC1D6;--primary:#3B82F6;--primary-text:#fff;
+  --top-bg:#3B82F6;--top-text:#fff;--icon-bg:#3B82F6;--icon-text:#fff;
+  --grad:linear-gradient(135deg,#9AC1D6 0%,#3B82F6 100%);
+}
 
-/* 卡片点击：果冻挤压 */
+/* 卡片果冻挤压 */
 .app-card,.tool-card,.my-grid-card,.notice-card,.lucky-btn{
   transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;
 }
@@ -21,7 +52,7 @@ body, body[data-theme], body[data-theme="light"], body[data-theme="dark"], body[
   100%{transform:scale(1)}
 }
 
-/* 按钮：弹性缩放 */
+/* 按钮弹性缩放 */
 .btn-view,.btn-auth,.btn-logout,.soft-tab,.tab-item{
   transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s,color .2s;
 }
@@ -35,7 +66,7 @@ body, body[data-theme], body[data-theme="light"], body[data-theme="dark"], body[
   100%{transform:scale(1)}
 }
 
-/* Tab 选中：放大旋转 */
+/* Tab 选中放大旋转 */
 .tab-item.active .icon{
   transform:scale(1.15);
   filter:drop-shadow(0 2px 4px rgba(124,179,66,.5));
@@ -47,29 +78,22 @@ body, body[data-theme], body[data-theme="light"], body[data-theme="dark"], body[
   100%{transform:scale(1.15)}
 }
 
-/* 页面切换：软滑入 */
-.page.active{
-  animation:pageSlide .35s cubic-bezier(.34,1.56,.64,1);
-}
+/* 页面软滑入 */
+.page.active{animation:pageSlide .35s cubic-bezier(.34,1.56,.64,1)}
 @keyframes pageSlide{
   0%{opacity:0;transform:translateY(8px) scale(.98)}
   100%{opacity:1;transform:translateY(0) scale(1)}
 }
 
-/* 标题：缓缓浮动 */
-.top-bar h1{
-  display:inline-block;
-  animation:slimeFloat 3s ease-in-out infinite;
-}
+/* 标题浮动 */
+.top-bar h1{display:inline-block;animation:slimeFloat 3s ease-in-out infinite}
 @keyframes slimeFloat{
   0%,100%{transform:translateY(0)}
   50%{transform:translateY(-3px)}
 }
 
-/* 卡片：逐个弹跳入场 */
-.app-card,.tool-card{
-  animation:cardEnter .4s cubic-bezier(.34,1.56,.64,1) backwards;
-}
+/* 卡片入场 */
+.app-card,.tool-card{animation:cardEnter .4s cubic-bezier(.34,1.56,.64,1) backwards}
 .app-card:nth-child(1),.tool-card:nth-child(1){animation-delay:.02s}
 .app-card:nth-child(2),.tool-card:nth-child(2){animation-delay:.06s}
 .app-card:nth-child(3),.tool-card:nth-child(3){animation-delay:.10s}
@@ -81,28 +105,13 @@ body, body[data-theme], body[data-theme="light"], body[data-theme="dark"], body[
   100%{opacity:1;transform:translateY(0) scale(1)}
 }
 
-/* 图标背景改绿 */
-.my-grid-icon{background:linear-gradient(135deg,#AED581,#7CB342)!important;color:#fff!important}
-.my-avatar{background:linear-gradient(135deg,#AED581,#7CB342)!important;color:#fff!important}
-
-/* 分类标签选中 */
-.soft-tab.active{
-  background:linear-gradient(135deg,#AED581,#7CB342);
-  box-shadow:0 4px 12px rgba(124,179,66,.5);
-}
-
-/* 手气不错 */
-.lucky-btn{
-  border:2px dashed #7CB342;
-  background:linear-gradient(135deg,#F1F8E9,#E8F5E9);
-}
-
-/* 应用图标 hover 微放大 */
+.my-grid-icon,.my-avatar{background:linear-gradient(135deg,#AED581,#7CB342)!important;color:#fff!important}
+.soft-tab.active{background:linear-gradient(135deg,#AED581,#7CB342);box-shadow:0 4px 12px rgba(124,179,66,.5)}
+.lucky-btn{border:2px dashed #7CB342;background:linear-gradient(135deg,#F1F8E9,#E8F5E9)}
 .app-icon{transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
 .app-card:hover .app-icon{transform:scale(1.1) rotate(-3deg)}
+.tab-bar{background:linear-gradient(180deg,#fff 0%,#F1F8E9 100%);border-top:1px solid #D6EAB9}
 
-/* 底部导航白绿 */
-.tab-bar{
-  background:linear-gradient(180deg,#fff 0%,#F1F8E9 100%);
-  border-top:1px solid #D6EAB9;
-}
+/* 主题按钮可拖动 */
+.theme-fab{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .2s}
+.theme-fab.dragging{transition:none!important;transform:scale(1.15);opacity:.9}
