@@ -82,6 +82,16 @@ textarea{resize:vertical;min-height:80px}
     <button class="btn-add" onclick="openModal('banner')">➕ 添加轮播图</button>
     <div class="item-list" id="banner-list"></div>
     <button class="btn btn-primary" style="margin-top:10px" onclick="saveAll('home_banners', 'banner')">保存轮播图</button>
+      <div class="section">
+    <h2>页面背景图</h2>
+    <div class="hint">上传一张图作为整个前台的背景（半透明叠加，不影响阅读）。留空则用默认配色。</div>
+    <input type="file" id="bg-upload" accept="image/*" style="display:none" onchange="uploadBg()">
+    <button class="btn-add" onclick="document.getElementById('bg-upload').click()">📷 上传背景图</button>
+    <div id="bg-preview" style="width:100%;height:120px;background-size:cover;background-position:center;border-radius:8px;margin-top:8px;background-color:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px">未设置</div>
+    <input id="bg-image-url" type="hidden">
+    <button class="btn btn-primary" onclick="saveBgImage()" style="margin-top:8px">保存背景图</button>
+    <button class="btn btn-danger" onclick="clearBgImage()" style="margin-left:8px">清除背景</button>
+  </div>
   </div>
 </div>
 <div id="tab-notice" class="tab-content">
@@ -434,6 +444,12 @@ async function saveMyPage() {
 async function loadConfig() {
   config = await fetch('/api/config').then(r => r.json());
   document.getElementById('ui-home-title').value = config.home_title || '';
+    document.getElementById('bg-image-url').value = config.bg_image || '';
+  if(config.bg_image){
+    var pv = document.getElementById('bg-preview');
+    pv.style.backgroundImage = 'url('+config.bg_image+')';
+    pv.innerHTML = '';
+  }
   document.getElementById('ui-home-subtitle').value = config.home_subtitle || '';
   document.getElementById('ui-notice-text').value = config.notice_text || '';
   document.getElementById('ui-apps-title').value = config.apps_title || '';
@@ -533,6 +549,34 @@ async function changePwd(){
   } else {
     alert(data.error || '修改失败');
   }
+}
+  async function uploadBg(){
+  var fi = document.getElementById('bg-upload');
+  var f = fi.files[0];
+  if(!f) return;
+  var fd = new FormData();
+  fd.append('file', f);
+  var res = await fetch('/api/upload', {method:'POST', headers:{'X-Admin-Token':'admin123'}, body:fd});
+  var data = await res.json();
+  if(data.url){
+    document.getElementById('bg-image-url').value = data.url;
+    var pv = document.getElementById('bg-preview');
+    pv.style.backgroundImage = 'url('+data.url+')';
+    pv.innerHTML = '';
+  } else { alert('上传失败'); }
+}
+async function saveBgImage(){
+  var url = document.getElementById('bg-image-url').value;
+  await fetch('/api/config', {method:'POST', headers:H, body:JSON.stringify({bg_image:url})});
+  alert('已保存，前台刷新即可看到');
+}
+async function clearBgImage(){
+  await fetch('/api/config', {method:'POST', headers:H, body:JSON.stringify({bg_image:''})});
+  document.getElementById('bg-image-url').value = '';
+  var pv = document.getElementById('bg-preview');
+  pv.style.backgroundImage = '';
+  pv.innerHTML = '未设置';
+  alert('已清除');
 }
 loadConfig(); loadApps(); loadUsers();
 </script>
