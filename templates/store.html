@@ -661,5 +661,68 @@ checkLogin();
 renderMyGrid();
 </script>
 <script src="/static/js/extras.js"></script>
+<script>
+(function(){
+  var fab = document.querySelector('.theme-fab');
+  if(!fab) return;
+  try {
+    var pos = JSON.parse(localStorage.getItem('theme_fab_pos') || 'null');
+    if(pos && pos.left !== undefined){
+      fab.style.left = pos.left + 'px';
+      fab.style.top = pos.top + 'px';
+      fab.style.right = 'auto';
+      fab.style.bottom = 'auto';
+    }
+  } catch(e){}
+  var sx=0, sy=0, ox=0, oy=0, dragging=false;
+  function onStart(e){
+    var t = e.touches ? e.touches[0] : e;
+    sx = t.clientX; sy = t.clientY;
+    var r = fab.getBoundingClientRect();
+    ox = r.left; oy = r.top;
+    dragging = false;
+    fab.classList.add('dragging');
+  }
+  function onMove(e){
+    if(sx === 0 && sy === 0) return;
+    var t = e.touches ? e.touches[0] : e;
+    var dx = t.clientX - sx;
+    var dy = t.clientY - sy;
+    if(Math.abs(dx) > 6 || Math.abs(dy) > 6) dragging = true;
+    if(dragging){
+      if(e.cancelable) e.preventDefault();
+      var W = window.innerWidth - fab.offsetWidth;
+      var H = window.innerHeight - fab.offsetHeight;
+      var nl = Math.max(0, Math.min(ox + dx, W));
+      var nt = Math.max(0, Math.min(oy + dy, H));
+      fab.style.left = nl + 'px';
+      fab.style.top = nt + 'px';
+      fab.style.right = 'auto';
+      fab.style.bottom = 'auto';
+    }
+  }
+  function onEnd(){
+    if(dragging){
+      try {
+        localStorage.setItem('theme_fab_pos', JSON.stringify({
+          left: parseInt(fab.style.left),
+          top: parseInt(fab.style.top)
+        }));
+      } catch(e){}
+    }
+    fab.classList.remove('dragging');
+    sx=0; sy=0;
+  }
+  fab.addEventListener('mousedown', onStart);
+  fab.addEventListener('touchstart', onStart, {passive:true});
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, {passive:false});
+  document.addEventListener('mouseup', onEnd);
+  document.addEventListener('touchend', onEnd);
+  fab.addEventListener('click', function(e){
+    if(dragging){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+})();
+</script>
 </body>
 </html>
