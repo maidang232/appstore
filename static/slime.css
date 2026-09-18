@@ -1,5 +1,5 @@
 /* ============ Slime 斯莱姆主题 ============ */
-body[data-theme="light"]{
+body, body[data-theme], body[data-theme="light"], body[data-theme="dark"], body[data-theme="gold"], body[data-theme="red"], body[data-theme="purple"], body[data-theme="blue"]{
   --bg:#EAF5DC;--card-bg:#fff;--text:#1B3A0E;--text-sub:#5B8A3A;--text-light:#9CCC65;
   --border:#D6EAB9;--border-2:#C1E0A0;--primary:#7CB342;--primary-text:#fff;
   --top-bg:#7CB342;--top-text:#fff;--icon-bg:#7CB342;--icon-text:#fff;
