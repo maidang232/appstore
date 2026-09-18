@@ -1,0 +1,108 @@
+/* ============ Slime 斯莱姆主题 ============ */
+body[data-theme="light"]{
+  --bg:#EAF5DC;--card-bg:#fff;--text:#1B3A0E;--text-sub:#5B8A3A;--text-light:#9CCC65;
+  --border:#D6EAB9;--border-2:#C1E0A0;--primary:#7CB342;--primary-text:#fff;
+  --top-bg:#7CB342;--top-text:#fff;--icon-bg:#7CB342;--icon-text:#fff;
+  --shadow:0 4px 16px rgba(124,179,66,.18);
+  --grad:linear-gradient(135deg,#AED581 0%,#7CB342 50%,#558B2F 100%);
+}
+
+/* 卡片点击：果冻挤压 */
+.app-card,.tool-card,.my-grid-card,.notice-card,.lucky-btn{
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;
+}
+.app-card:active,.tool-card:active,.my-grid-card:active,.notice-card:active,.lucky-btn:active{
+  animation:slimeSquish .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slimeSquish{
+  0%{transform:scale(1)}
+  30%{transform:scale(1.06,.9)}
+  55%{transform:scale(.95,1.05)}
+  100%{transform:scale(1)}
+}
+
+/* 按钮：弹性缩放 */
+.btn-view,.btn-auth,.btn-logout,.soft-tab,.tab-item{
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s,color .2s;
+}
+.btn-view:active,.btn-auth:active,.btn-logout:active,.soft-tab:active,.tab-item:active{
+  animation:slimeBounce .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slimeBounce{
+  0%{transform:scale(1)}
+  35%{transform:scale(.88,1.12)}
+  65%{transform:scale(1.12,.88)}
+  100%{transform:scale(1)}
+}
+
+/* Tab 选中：放大旋转 */
+.tab-item.active .icon{
+  transform:scale(1.15);
+  filter:drop-shadow(0 2px 4px rgba(124,179,66,.5));
+  animation:tabPop .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes tabPop{
+  0%{transform:scale(1)}
+  50%{transform:scale(1.35) rotate(-8deg)}
+  100%{transform:scale(1.15)}
+}
+
+/* 页面切换：软滑入 */
+.page.active{
+  animation:pageSlide .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes pageSlide{
+  0%{opacity:0;transform:translateY(8px) scale(.98)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+
+/* 标题：缓缓浮动 */
+.top-bar h1{
+  display:inline-block;
+  animation:slimeFloat 3s ease-in-out infinite;
+}
+@keyframes slimeFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-3px)}
+}
+
+/* 卡片：逐个弹跳入场 */
+.app-card,.tool-card{
+  animation:cardEnter .4s cubic-bezier(.34,1.56,.64,1) backwards;
+}
+.app-card:nth-child(1),.tool-card:nth-child(1){animation-delay:.02s}
+.app-card:nth-child(2),.tool-card:nth-child(2){animation-delay:.06s}
+.app-card:nth-child(3),.tool-card:nth-child(3){animation-delay:.10s}
+.app-card:nth-child(4),.tool-card:nth-child(4){animation-delay:.14s}
+.app-card:nth-child(5),.tool-card:nth-child(5){animation-delay:.18s}
+.app-card:nth-child(6),.tool-card:nth-child(6){animation-delay:.22s}
+@keyframes cardEnter{
+  0%{opacity:0;transform:translateY(14px) scale(.94)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+
+/* 图标背景改绿 */
+.my-grid-icon{background:linear-gradient(135deg,#AED581,#7CB342)!important;color:#fff!important}
+.my-avatar{background:linear-gradient(135deg,#AED581,#7CB342)!important;color:#fff!important}
+
+/* 分类标签选中 */
+.soft-tab.active{
+  background:linear-gradient(135deg,#AED581,#7CB342);
+  box-shadow:0 4px 12px rgba(124,179,66,.5);
+}
+
+/* 手气不错 */
+.lucky-btn{
+  border:2px dashed #7CB342;
+  background:linear-gradient(135deg,#F1F8E9,#E8F5E9);
+}
+
+/* 应用图标 hover 微放大 */
+.app-icon{transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.app-card:hover .app-icon{transform:scale(1.1) rotate(-3deg)}
+
+/* 底部导航白绿 */
+.tab-bar{
+  background:linear-gradient(180deg,#fff 0%,#F1F8E9 100%);
+  border-top:1px solid #D6EAB9;
+}
