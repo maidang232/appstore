@@ -115,3 +115,6 @@ body[data-theme="blue"]{
 /* 主题按钮可拖动 */
 .theme-fab{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .2s}
 .theme-fab.dragging{transition:none!important;transform:scale(1.15);opacity:.9}
+/* 分享图标下移，避免和状态栏重叠 */
+.top-bar .share-icon{top:62px!important}
+.top-bar .top-actions{top:62px!important}
