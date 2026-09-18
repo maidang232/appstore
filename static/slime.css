@@ -126,3 +126,5 @@ body[data-theme="blue"]{
   background-repeat: no-repeat !important;
   background-position: center !important;
 }
+
+.tool-card .deco{display:none !important}
