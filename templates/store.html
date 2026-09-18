@@ -472,8 +472,15 @@ function openTool(i){
   const tab = config.tools_tabs && config.tools_tabs.find(t=>t.name===currentToolsTab);
   if(!tab || !tab.cards || !tab.cards[i]) return;
   const c = tab.cards[i];
-  if (c.link) { window.open(c.link, '_blank'); }
-  else { showInfo(c.title || '工具', c.desc || c.sub || '暂无更多信息'); }
+  if (c.link && c.link.trim()) {
+    let url = c.link.trim();
+    if(!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+    }
+    window.open(url, '_blank');
+  } else {
+    showInfo(c.title || '工具', c.desc || c.sub || '暂无更多信息');
+  }
 }
 function setToolTab(name){currentToolsTab=name;loadConfig()}
 
