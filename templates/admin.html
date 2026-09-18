@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>应用库后台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,sans-serif}
+body{background:#f2f4f8;color:#1a1d23;padding-bottom:30px}
+.header{background:linear-gradient(135deg,#1a1d23 0%,#2d3340 100%);color:#fff;padding:20px;border-radius:0 0 20px 20px;margin-bottom:15px}
+.header h1{font-size:20px;font-weight:700}
+.header p{font-size:12px;color:rgba(255,255,255,.5);margin-top:4px}
+.tabs{display:flex;padding:0 15px;gap:8px;margin-bottom:15px;overflow-x:auto}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;text-align:center;padding:10px 8px;background:#fff;border-radius:12px;font-size:13px;font-weight:600;color:#666;cursor:pointer;white-space:nowrap;min-width:70px}
+.tab.active{background:#4f6ef7;color:#fff;box-shadow:0 2px 8px rgba(79,110,247,.3)}
+.tab-content{display:none;padding:0 15px}
+.tab-content.active{display:block}
+.section{background:#fff;border-radius:16px;padding:18px;margin-bottom:15px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.section h2{font-size:15px;font-weight:700;margin-bottom:12px;color:#2d3340;display:flex;align-items:center;gap:8px}
+.section h2::before{content:"";width:4px;height:16px;background:#4f6ef7;border-radius:2px}
+.hint{font-size:12px;color:#999;margin-bottom:8px;line-height:1.6}
+input,textarea,select{display:block;margin:6px 0;padding:10px 12px;width:100%;border:1.5px solid #e8eaf0;border-radius:8px;font-size:13px;outline:none;background:#fafbfd;font-family:inherit}
+input:focus,textarea:focus,select:focus{border-color:#4f6ef7;box-shadow:0 0 0 3px rgba(79,110,247,.1);background:#fff}
+textarea{resize:vertical;min-height:80px}
+.btn{padding:10px 18px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:5px}
+.btn-primary{background:#4f6ef7;color:#fff}
+.btn-danger{background:#ff4757;color:#fff;padding:6px 12px;font-size:12px;border-radius:6px}
+.btn-add{background:#10b981;color:#fff;padding:6px 12px;font-size:12px;border-radius:6px;display:flex;align-items:center;gap:4px;margin-bottom:10px}
+.item-list{display:flex;flex-direction:column;gap:10px}
+.item-card{background:#fafbfd;border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;border:1px solid #eef1f6;cursor:pointer}
+.item-card.active{border-color:#4f6ef7;background:#f0f4ff;box-shadow:0 0 0 2px rgba(79,110,247,.1)}
+.item-thumb{width:50px;height:50px;border-radius:8px;background:#eee;object-fit:cover;background-size:cover;background-position:center}
+.item-info{flex:1}
+.item-info h4{font-size:14px;margin-bottom:3px}
+.item-info p{font-size:11px;color:#999}
+.item-actions{display:flex;gap:5px}
+.btn-edit{background:#f0f1f5;color:#333;padding:6px 12px;font-size:12px;border-radius:6px}
+.btn-del{background:#ffeaea;color:#ff4757;padding:6px 12px;font-size:12px;border-radius:6px}
+.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end}
+.modal.show{display:flex}
+.modal-content{background:#fff;width:100%;border-radius:20px 20px 0 0;padding:20px;max-height:85vh;overflow-y:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.modal-header h3{font-size:18px}
+.modal-close{font-size:24px;color:#999;cursor:pointer}
+.form-group{margin-bottom:15px}
+.form-group label{font-size:13px;font-weight:600;color:#333;display:block;margin-bottom:5px}
+.color-picker-row{display:flex;align-items:center;gap:10px;margin-top:5px}
+.color-picker-row input[type="color"]{width:50px;height:40px;padding:2px;border-radius:8px;cursor:pointer;border:1px solid #ddd}
+.color-text{font-size:13px;color:#666}
+.upload-preview{width:100%;height:120px;background:#f0f1f5;border-radius:10px;margin-top:5px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#999;background-size:cover;background-position:center;overflow:hidden}
+.my-card-edit{background:#fafbfd;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #eef1f6}
+.my-card-edit .row{display:flex;gap:8px;align-items:center}
+.my-card-edit .row select{flex:0 0 120px;margin:6px 0}
+.my-card-edit .row input{flex:1;margin:6px 0}
+
+.item-info h4, .item-info p { word-break: break-all; white-space: normal; line-height: 1.4; }
+.item-card { align-items: flex-start; }
+.item-card .item-thumb { margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="header"><h1>应用库后台</h1><p>可视化配置你的前台内容</p></div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('tab-home', this)">首页</div>
+  <div class="tab" onclick="switchTab('tab-notice', this)">公告</div>
+  <div class="tab" onclick="switchTab('tab-apps', this)">软件</div>
+  <div class="tab" onclick="switchTab('tab-tools', this)">工具</div>
+  <div class="tab" onclick="switchTab('tab-my', this)">我的</div>
+  <div class="tab" onclick="switchTab('tab-settings', this)">设置</div>
+</div>
+<div id="tab-home" class="tab-content active">
+  <div class="section">
+    <h2>首页基础信息</h2>
+    <input id="ui-home-title" placeholder="首页标题">
+    <input id="ui-home-subtitle" placeholder="首页副标题">
+    <textarea id="ui-notice-text" rows="2" placeholder="滚动公告文字"></textarea>
+    <button class="btn btn-primary" onclick="saveHome()">保存首页基础信息</button>
+  </div>
+  <div class="section">
+    <h2>首页轮播图</h2>
+    <button class="btn-add" onclick="openModal('banner')">➕ 添加轮播图</button>
+    <div class="item-list" id="banner-list"></div>
+    <button class="btn btn-primary" style="margin-top:10px" onclick="saveAll('home_banners', 'banner')">保存轮播图</button>
+  </div>
+</div>
+<div id="tab-notice" class="tab-content">
+  <div class="section">
+    <h2>公告卡片管理</h2>
+    <button class="btn-add" onclick="openModal('notice')">➕ 添加公告卡片</button>
+    <div class="item-list" id="notice-list"></div>
+    <button class="btn btn-primary" style="margin-top:10px" onclick="saveAll('notice_cards', 'notice')">保存公告卡片</button>
+  </div>
+</div>
+<div id="tab-apps" class="tab-content">
+  <div class="section">
+    <h2>软件页基础信息</h2>
+    <input id="ui-apps-title" placeholder="软件页标题">
+    <input id="ui-apps-subtitle" placeholder="软件页副标题">
+    <button class="btn btn-primary" onclick="saveAppsInfo()">保存软件页基础信息</button>
+  </div>
+  <div class="section">
+    <h2>软件页分类标签</h2>
+    <button class="btn-add" onclick="openTabModal('software')">➕ 添加分类</button>
+    <div class="item-list" id="software-tabs-list"></div>
+    <button class="btn btn-primary" style="margin-top:10px" onclick="saveSoftwareTabs()">保存分类标签</button>
+  </div>
+  <div class="section">
+    <h2>添加应用</h2>
+    <input id="app-name" placeholder="应用名称 *">
+    <input id="app-desc" placeholder="描述">
+    <input id="app-cat" placeholder="所属分类">
+    <input id="app-url" placeholder="下载链接 URL">
+    <button class="btn btn-primary" onclick="addApp()">添加应用</button>
+  </div>
+  <div class="section">
+    <h2>应用列表</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr><th style="text-align:left;padding:8px;color:#8e94a3;border-bottom:1.5px solid #eef1f6">ID</th><th style="text-align:left;padding:8px;color:#8e94a3;border-bottom:1.5px solid #eef1f6">名称</th><th style="text-align:left;padding:8px;color:#8e94a3;border-bottom:1.5px solid #eef1f6">分类</th><th style="text-align:left;padding:8px;color:#8e94a3;border-bottom:1.5px solid #eef1f6">操作</th></tr></thead>
+      <tbody id="app-tbody"></tbody>
+    </table>
+  </div>
+</div>
+<div id="tab-tools" class="tab-content">
+  <div class="section">
+    <h2>工具页基础信息</h2>
+    <input id="ui-tools-title" placeholder="工具页标题">
+    <input id="ui-tools-subtitle" placeholder="工具页副标题">
+    <button class="btn btn-primary" onclick="saveToolsInfo()">保存工具页基础信息</button>
+  </div>
+  <div class="section">
+    <h2>工具页标签</h2>
+    <button class="btn-add" onclick="openTabModal('tools')">➕ 添加标签</button>
+    <div class="item-list" id="tools-tabs-list"></div>
+    <button class="btn btn-primary" style="margin-top:10px" onclick="saveToolsTabs()">保存工具标签</button>
+  </div>
+  <div class="section">
+    <h2 id="current-tool-title">当前管理：未选择标签</h2>
+    <button class="btn-add" id="add-card-btn" onclick="openModal('tool')" style="display:none">➕ 添加卡片</button>
+    <div class="item-list" id="tool-cards-list"></div>
+  </div>
+</div>
+<div id="tab-my" class="tab-content">
+  <div class="section">
+    <h2>用户列表</h2>
+    <div class="hint">所有已注册的用户。</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr><th style="text-align:left;padding:8px;color:#8e94a3;border-bottom:1.5px solid #eef1f6">ID</th><th style="text-align:left;padding:8px;color:#8e94a3;border-bottom:1.5px solid #eef1f6">用户名</th><th style="text-align:left;padding:8px;color:#8e94a3;border-bottom:1.5px solid #eef1f6">注册时间</th></tr></thead>
+      <tbody id="users-tbody"></tbody>
+    </table>
+  </div>
+  <div class="section">
+    <h2>我的页顶部</h2>
+    <input id="my-page-title" placeholder="我的页顶部标题，例：我的">
+    <input id="my-page-subtitle" placeholder="我的页顶部副标题">
+  </div>
+  <div class="section">
+    <h2>分享链接</h2>
+    <div class="hint">点击前台的分享按钮时，会把这个链接复制到剪贴板。</div>
+    <input id="share-link" placeholder="例：http://localhost:8000/store">
+  </div>
+  <div class="section">
+    <h2>快捷卡片（固定4个）</h2>
+    <div id="my-cards-edit"></div>
+    <button class="btn btn-primary" onclick="saveMyPage()">保存我的页设置</button>
+  </div>
+</div>
+
+<div id="tab-settings" class="tab-content">
+  <div class="section">
+    <h2>修改后台密码</h2>
+    <div class="hint">修改后下次登录需用新密码。</div>
+    <input type="password" id="pwd-old" placeholder="原密码">
+    <input type="password" id="pwd-new" placeholder="新密码（至少4位）">
+    <input type="password" id="pwd-new2" placeholder="再次输入新密码">
+    <button class="btn btn-primary" onclick="changePwd()">确认修改</button>
+  </div>
+  <div class="section">
+    <h2>退出登录</h2>
+    <div class="hint">退出后需要重新输入密码才能进入后台。</div>
+    <button class="btn" style="background:#ff4757;color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;cursor:pointer;border:none" onclick="location.href='/admin/logout'">退出登录</button>
+  </div>
+</div>
+
+<div class="modal" id="edit-modal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="modal-title">编辑</h3><div class="modal-close" onclick="closeModal('edit-modal')">✕</div></div>
+    <div class="form-group" id="group-title"><label>标题</label><input id="edit-title" placeholder="输入标题"></div>
+    <div class="form-group" id="group-desc"><label>简介 / 副标题</label><input id="edit-desc" placeholder="输入副标题"></div>
+    <div class="form-group" id="group-link"><label>跳转链接 (可选)</label><input id="edit-link" placeholder="点击跳转到哪个网址"></div>
+    <div class="form-group" id="group-icon"><label>图标 Emoji</label><input id="edit-icon" placeholder="输入一个 Emoji"></div>
+    <div class="form-group"><label>背景图片</label><input type="file" id="edit-image-input" style="display:none" onchange="uploadImage()"><div class="upload-preview" id="edit-preview" onclick="document.getElementById('edit-image-input').click()"><span>点击上传背景图片</span></div><input type="hidden" id="edit-image-url"></div>
+    <div class="form-group"><label>图片位置调整</label><select id="edit-position"><option value="center center">居中</option><option value="top center">靠上</option><option value="bottom center">靠下</option><option value="center left">靠左</option><option value="center right">靠右</option></select></div>
+    <div class="form-group"><label>背景颜色</label><div class="color-picker-row"><input type="color" id="edit-color" value="#f0f0f0"><span class="color-text" id="color-text">#f0f0f0</span></div></div>
+    <button class="btn btn-primary" style="width:100%;padding:14px" onclick="saveItem()">保存此项</button>
+  </div>
+</div>
+<div class="modal" id="tab-modal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="tab-modal-title">编辑标签</h3><div class="modal-close" onclick="closeModal('tab-modal')">✕</div></div>
+    <div class="form-group"><label>标签名称</label><input id="tab-edit-name" placeholder="例如：工具、教程"></div>
+    <button class="btn btn-primary" style="width:100%;padding:14px" onclick="saveTabItem()">保存标签</button>
+  </div>
+</div>
+<script>
+function escapeHtml(s){
+  if(s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+const H = {'Content-Type':'application/json','X-Admin-Token':'admin123'};
+let config = {};
+let editType = '';
+let editIndex = -1;
+let tempData = { banners: [], notices: [], softwareTabs: [], toolsTabs: [], myCards: [] };
+let currentToolTabIndex = -1;
+
+function switchTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+async function uploadImage() {
+  const fileInput = document.getElementById('edit-image-input');
+  const file = fileInput.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch('/api/upload', { method: 'POST', headers: {'X-Admin-Token': 'admin123'}, body: formData });
+  const data = await res.json();
+  if (data.url) {
+    document.getElementById('edit-image-url').value = data.url;
+    document.getElementById('edit-preview').style.backgroundImage = `url(${data.url})`;
+    document.getElementById('edit-preview').innerHTML = '';
+  } else { alert('上传失败'); }
+}
+
+function openModal(type, index = -1) {
+  editType = type; editIndex = index;
+  document.getElementById('modal-title').innerText = (index === -1 ? '添加' : '编辑') + (type === 'banner' ? '轮播图' : type === 'notice' ? '公告卡片' : '工具卡片');
+  document.getElementById('edit-title').value = '';
+  document.getElementById('edit-desc').value = '';
+  document.getElementById('edit-link').value = '';
+  document.getElementById('edit-icon').value = '';
+  document.getElementById('edit-image-url').value = '';
+  document.getElementById('edit-preview').style.backgroundImage = '';
+  document.getElementById('edit-preview').innerHTML = '<span>点击上传背景图片</span>';
+  document.getElementById('edit-color').value = '#f0f0f0';
+  document.getElementById('color-text').innerText = '#f0f0f0';
+  document.getElementById('group-title').style.display = 'block';
+  document.getElementById('group-desc').style.display = 'block';
+  document.getElementById('group-link').style.display = 'none';
+  document.getElementById('group-icon').style.display = 'none';
+  if (type === 'banner') document.getElementById('group-link').style.display = 'block';
+  // notice 也显示 desc，用于存点击后显示的内容
+  if (type === 'tool') { document.getElementById('group-icon').style.display = 'block'; document.getElementById('group-link').style.display = 'block'; }
+  if (index > -1) {
+    let item = type === 'banner' ? tempData.banners[index] : type === 'notice' ? tempData.notices[index] : tempData.toolsTabs[currentToolTabIndex].cards[index];
+    if (item) {
+      document.getElementById('edit-title').value = item.title || '';
+      document.getElementById('edit-desc').value = item.desc || item.sub || '';
+      document.getElementById('edit-link').value = item.link || '';
+      document.getElementById('edit-icon').value = item.icon || '';
+      document.getElementById('edit-image-url').value = item.bg || item.image || '';
+      if (item.bg || item.image) {
+        document.getElementById('edit-preview').style.backgroundImage = `url(${item.bg || item.image})`;
+        document.getElementById('edit-preview').innerHTML = '';
+      }
+      document.getElementById('edit-color').value = item.color || '#f0f0f0';
+      document.getElementById('color-text').innerText = item.color || '#f0f0f0';
+    }
+  }
+  document.getElementById('edit-modal').classList.add('show');
+}
+
+function saveItem() {
+  const title = document.getElementById('edit-title').value;
+  if (!title) { alert('请填写标题'); return; }
+  const newItem = {
+    title: title,
+    desc: document.getElementById('edit-desc').value,
+    link: document.getElementById('edit-link').value,
+    icon: document.getElementById('edit-icon').value || '★',
+    bg: document.getElementById('edit-image-url').value,
+    position: document.getElementById('edit-position').value,
+    color: document.getElementById('edit-color').value
+  };
+  if (editType === 'banner') { if (editIndex > -1) tempData.banners[editIndex] = newItem; else tempData.banners.push(newItem); renderList('banner'); }
+  else if (editType === 'notice') { if (editIndex > -1) tempData.notices[editIndex] = newItem; else tempData.notices.push(newItem); renderList('notice'); }
+  else if (editType === 'tool') {
+    if (editIndex > -1) tempData.toolsTabs[currentToolTabIndex].cards[editIndex] = newItem;
+    else tempData.toolsTabs[currentToolTabIndex].cards.push(newItem);
+    renderToolCards();
+  }
+  closeModal('edit-modal');
+  // 自动同步到后端
+  if (editType === 'banner') { saveAll('home_banners', 'banner'); }
+  else if (editType === 'notice') { saveAll('notice_cards', 'notice'); }
+  else if (editType === 'tool') { saveToolsTabs(); }
+}
+
+function deleteItem(type, index) {
+  if (!confirm('确定删除吗？')) return;
+  if (type === 'banner') { tempData.banners.splice(index, 1); renderList('banner'); saveAll('home_banners', 'banner'); }
+  else if (type === 'notice') { tempData.notices.splice(index, 1); renderList('notice'); saveAll('notice_cards', 'notice'); }
+  else if (type === 'tool') { tempData.toolsTabs[currentToolTabIndex].cards.splice(index, 1); renderToolCards(); saveToolsTabs(); }
+}
+
+function renderList(type) {
+  let listEl = type === 'banner' ? 'banner-list' : 'notice-list';
+  let items = type === 'banner' ? tempData.banners : tempData.notices;
+  document.getElementById(listEl).innerHTML = items.map((item, index) => {
+    const bgStyle = item.bg ? `background-image:url(${item.bg});background-position:${item.position||'center'};` : `background:${item.color||'#f0f0f0'};`;
+    return `<div class="item-card"><div class="item-thumb" style="${bgStyle}"></div><div class="item-info"><h4>${item.title}</h4><p>${item.desc || item.sub || ''}</p></div><div class="item-actions"><button class="btn-edit" onclick="openModal('${type}', ${index})">编辑</button><button class="btn-del" onclick="deleteItem('${type}', ${index})">删除</button></div></div>`;
+  }).join('');
+}
+
+function openTabModal(type, index = -1) {
+  editType = type; editIndex = index;
+  document.getElementById('tab-modal-title').innerText = (index === -1 ? '添加' : '编辑') + (type === 'software' ? '分类' : '标签');
+  document.getElementById('tab-edit-name').value = '';
+  if (index > -1) {
+    if (type === 'software') { document.getElementById('tab-edit-name').value = tempData.softwareTabs[index]; }
+    else { document.getElementById('tab-edit-name').value = tempData.toolsTabs[index].name; }
+  }
+  document.getElementById('tab-modal').classList.add('show');
+}
+
+function saveTabItem() {
+  const name = document.getElementById('tab-edit-name').value.trim();
+  if (!name) { alert('请填写标签名称'); return; }
+  if (editType === 'software') {
+    if (editIndex > -1) tempData.softwareTabs[editIndex] = name; else tempData.softwareTabs.push(name);
+    renderTabList('software');
+  } else {
+    const newItem = { name, type: 'cards', cards: [] };
+    if (editIndex > -1) { newItem.cards = tempData.toolsTabs[editIndex].cards || []; tempData.toolsTabs[editIndex] = newItem; }
+    else { tempData.toolsTabs.push(newItem); currentToolTabIndex = tempData.toolsTabs.length - 1; }
+    renderTabList('tools');
+  }
+  closeModal('tab-modal');
+}
+
+function deleteTabItem(type, index) {
+  if (!confirm('确定删除吗？')) return;
+  if (type === 'software') { tempData.softwareTabs.splice(index, 1); renderTabList(type); }
+  else { tempData.toolsTabs.splice(index, 1); if(currentToolTabIndex >= tempData.toolsTabs.length) currentToolTabIndex = tempData.toolsTabs.length - 1; renderTabList(type); }
+}
+
+function renderTabList(type) {
+  const listEl = type === 'software' ? 'software-tabs-list' : 'tools-tabs-list';
+  const items = type === 'software' ? tempData.softwareTabs : tempData.toolsTabs;
+  document.getElementById(listEl).innerHTML = items.map((item, index) => {
+    const name = type === 'software' ? item : item.name;
+    const desc = type === 'software' ? '点击切换分类' : ('卡片网格 (' + (item.cards ? item.cards.length : 0) + '张)');
+    const isActive = type === 'tools' && index === currentToolTabIndex;
+    return `<div class="item-card ${isActive?'active':''}" onclick="${type === 'tools' ? `selectToolTab(${index})` : ''}"><div class="item-info"><h4>${name}</h4><p>${desc}</p></div><div class="item-actions"><button class="btn-edit" onclick="event.stopPropagation();openTabModal('${type}', ${index})">编辑</button><button class="btn-del" onclick="event.stopPropagation();deleteTabItem('${type}', ${index})">删除</button></div></div>`;
+  }).join('');
+  if (type === 'tools') { renderToolCards(); }
+}
+
+function selectToolTab(index) { currentToolTabIndex = index; renderTabList('tools'); }
+
+function renderToolCards() {
+  const listEl = 'tool-cards-list'; const titleEl = 'current-tool-title'; const addBtn = 'add-card-btn';
+  if (currentToolTabIndex === -1 || !tempData.toolsTabs[currentToolTabIndex]) {
+    document.getElementById(titleEl).innerText = '当前管理：未选择标签'; document.getElementById(addBtn).style.display = 'none'; document.getElementById(listEl).innerHTML = ''; return;
+  }
+  const tab = tempData.toolsTabs[currentToolTabIndex];
+  document.getElementById(titleEl).innerText = '当前管理：' + tab.name;
+  document.getElementById(addBtn).style.display = 'flex';
+  const cards = tab.cards || [];
+  document.getElementById(listEl).innerHTML = cards.map((item, index) => {
+    const bgStyle = item.bg ? `background-image:url(${item.bg});background-position:${item.position||'center'};` : `background:${item.color||'#f0f0f0'};`;
+    return `<div class="item-card"><div class="item-thumb" style="${bgStyle}"></div><div class="item-info"><h4>${item.title}</h4><p>${item.sub || ''}</p></div><div class="item-actions"><button class="btn-edit" onclick="openModal('tool', ${index})">编辑</button><button class="btn-del" onclick="deleteItem('tool', ${index})">删除</button></div></div>`;
+  }).join('');
+}
+
+async function saveAll(configKey, type) {
+  let items = type === 'banner' ? tempData.banners : tempData.notices;
+  const formatted = items.map(item => ({ title: item.title, desc: item.desc || '', sub: item.desc || '', content: item.desc || '', link: item.link || '', icon: item.icon || '', bg: item.bg || '', image: item.bg || '', position: item.position || 'center', color: item.color || '#f0f0f0' }));
+  await fetch('/api/config', { method:'POST', headers:H, body:JSON.stringify({ [configKey]: formatted })});
+  alert('保存成功！');
+}
+async function saveSoftwareTabs() { await fetch('/api/config', { method:'POST', headers:H, body:JSON.stringify({ software_tabs: tempData.softwareTabs.join(',') })}); alert('分类标签已保存！'); }
+async function saveToolsTabs() { await fetch('/api/config', { method:'POST', headers:H, body:JSON.stringify({ tools_tabs: tempData.toolsTabs })}); alert('工具标签及卡片已保存！'); }
+async function saveHome() { await fetch('/api/config', {method:'POST', headers:H, body:JSON.stringify({ home_title: document.getElementById('ui-home-title').value, home_subtitle: document.getElementById('ui-home-subtitle').value, notice_text: document.getElementById('ui-notice-text').value })}); alert('首页基础信息已保存！'); }
+async function saveAppsInfo() { await fetch('/api/config', {method:'POST', headers:H, body:JSON.stringify({ apps_title: document.getElementById('ui-apps-title').value, apps_subtitle: document.getElementById('ui-apps-subtitle').value })}); alert('软件页基础信息已保存！'); }
+async function saveToolsInfo() { await fetch('/api/config', {method:'POST', headers:H, body:JSON.stringify({ tools_title: document.getElementById('ui-tools-title').value, tools_subtitle: document.getElementById('ui-tools-subtitle').value })}); alert('工具页基础信息已保存！'); }
+
+function renderMyCardsEdit() {
+  const icons = [
+    {v:'star', n:'星星'},{v:'user', n:'用户'},{v:'chat', n:'对话'},{v:'plane', n:'飞机'},
+    {v:'download', n:'下载'},{v:'share', n:'分享'},{v:'lock', n:'锁'},{v:'bell', n:'铃铛'}
+  ];
+  let html = '';
+  for (let i = 0; i < 4; i++) {
+    const c = tempData.myCards[i] || { icon: 'star', title: '', sub: '', content: '' };
+    html += `<div class="my-card-edit">
+      <div class="row">
+        <select id="my-icon-${i}">${icons.map(o=>`<option value="${o.v}" ${o.v===c.icon?'selected':''}>${o.n}</option>`).join('')}</select>
+        <input id="my-title-${i}" placeholder="标题" value="${(c.title||'').replace(/"/g,'&quot;')}">
+      </div>
+      <input id="my-sub-${i}" placeholder="副标题" value="${(c.sub||'').replace(/"/g,'&quot;')}">
+      <input id="my-content-${i}" placeholder="点击后弹窗显示的内容" value="${(c.content||'').replace(/"/g,'&quot;')}">
+    </div>`;
+  }
+  document.getElementById('my-cards-edit').innerHTML = html;
+}
+
+async function saveMyPage() {
+  const cards = [];
+  for (let i = 0; i < 4; i++) {
+    cards.push({
+      icon: document.getElementById('my-icon-'+i).value,
+      title: document.getElementById('my-title-'+i).value,
+      sub: document.getElementById('my-sub-'+i).value,
+      content: document.getElementById('my-content-'+i).value
+    });
+  }
+  await fetch('/api/config', {method:'POST', headers:H, body:JSON.stringify({
+    my_title: document.getElementById('my-page-title').value,
+    my_subtitle: document.getElementById('my-page-subtitle').value,
+    share_link: document.getElementById('share-link').value,
+    my_page: {
+      cards: cards
+    }
+  })});
+  alert('我的页设置已保存！');
+}
+
+async function loadConfig() {
+  config = await fetch('/api/config').then(r => r.json());
+  document.getElementById('ui-home-title').value = config.home_title || '';
+  document.getElementById('ui-home-subtitle').value = config.home_subtitle || '';
+  document.getElementById('ui-notice-text').value = config.notice_text || '';
+  document.getElementById('ui-apps-title').value = config.apps_title || '';
+  document.getElementById('ui-apps-subtitle').value = config.apps_subtitle || '';
+  document.getElementById('ui-tools-title').value = config.tools_title || '';
+  document.getElementById('ui-tools-subtitle').value = config.tools_subtitle || '';
+  document.getElementById('share-link').value = config.share_link || '';
+  document.getElementById('my-page-title').value = config.my_title || '';
+  document.getElementById('my-page-subtitle').value = config.my_subtitle || '';
+  if (config.home_banners) tempData.banners = config.home_banners.map(b => ({ title: b.title||'', desc: b.desc||'', link: b.link||'', bg: b.image||b.bg||'', position: b.position||'center', color: b.color||'#f0f0f0' }));
+  if (config.notice_cards) tempData.notices = config.notice_cards.map(c => ({ title: c.title||'', desc: c.content || c.desc || '', bg: c.bg||c.image||'', position: c.position||'center', color: c.color||'#f0f0f0' }));
+  if (config.software_tabs) tempData.softwareTabs = config.software_tabs.split(',').map(s=>s.trim()).filter(s=>s);
+  if (config.tools_tabs) {
+    tempData.toolsTabs = config.tools_tabs.map((t, i) => {
+      let cards = t.cards || [];
+      if (i === 0 && config.tools_cards && config.tools_cards.length > 0 && cards.length === 0) {
+        cards = config.tools_cards.map(c => ({ title: c.title||'', sub: c.sub||'', icon: c.icon||'', bg: c.bg||c.image||'', position: c.position||'center', color: c.color||'#f0f0f0' }));
+      }
+      return { name: t.name, type: 'cards', content: '', cards: cards };
+    });
+  }
+  if (tempData.toolsTabs.length > 0 && currentToolTabIndex === -1) currentToolTabIndex = 0;
+  if (config.my_page) {
+    tempData.myCards = config.my_page.cards || [];
+  }
+  renderMyCardsEdit();
+  renderList('banner'); renderList('notice'); renderTabList('software'); renderTabList('tools');
+}
+
+async function loadApps() {
+  const apps = await fetch('/api/apps').then(r => r.json());
+  window._apps = apps;
+  document.getElementById('app-tbody').innerHTML = apps.map((a, idx) => `<tr><td style="padding:8px;border-bottom:1px solid #f5f7fa">${a.id}</td><td style="padding:8px;border-bottom:1px solid #f5f7fa;word-break:break-all;max-width:120px">${a.name}</td><td style="padding:8px;border-bottom:1px solid #f5f7fa"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;background:#eef1ff;color:#4f6ef7">${a.category || '未分类'}</span></td><td style="padding:8px;border-bottom:1px solid #f5f7fa;white-space:nowrap"><button class="btn-edit" onclick="editApp(${idx})">编辑</button> <button class="btn-danger" onclick="delApp(${a.id})">删除</button></td></tr>`).join('');
+}
+
+function editApp(idx) {
+  const a = window._apps[idx];
+  if(!a) return;
+  document.getElementById('ae-id').value = a.id;
+  document.getElementById('ae-name').value = a.name || ''; document.getElementById('ae-desc').value = a.description || '';
+  document.getElementById('ae-desc').value = a.description || '';
+  document.getElementById('ae-cat').value = a.category || '';
+  document.getElementById('ae-icon').value = a.icon_url || '';
+  document.getElementById('ae-url').value = a.download_url || '';
+  document.getElementById('app-edit-modal').classList.add('show');
+}
+
+function closeAppEdit() {
+  document.getElementById('app-edit-modal').classList.remove('show');
+}
+
+async function saveAppEdit() {
+  const id = document.getElementById('ae-id').value;
+  const body = {
+    name: document.getElementById('ae-name').value,
+    description: document.getElementById('ae-desc').value,
+    category: document.getElementById('ae-cat').value,
+    icon_url: document.getElementById('ae-icon').value,
+    download_url: document.getElementById('ae-url').value
+  };
+  if(!body.name){ alert('应用名称不能为空'); return; }
+  const res = await fetch('/api/apps/' + id, {method:'PUT', headers:H, body:JSON.stringify(body)});
+  if(res.ok){ closeAppEdit(); loadApps(); alert('已保存'); }
+  else { alert('保存失败'); }
+}
+async function addApp() {
+  const b = { name: document.getElementById('app-name').value, description: document.getElementById('app-desc').value, category: document.getElementById('app-cat').value, download_url: document.getElementById('app-url').value };
+  if (!b.name) { alert('请填写应用名称'); return; }
+  await fetch('/api/apps', {method:'POST', headers:H, body:JSON.stringify(b)});
+  document.getElementById('app-name').value = ''; document.getElementById('app-desc').value = ''; document.getElementById('app-url').value = '';
+  loadApps();
+}
+async function delApp(id) { if (!confirm('确定删除？')) return; await fetch('/api/apps/' + id, {method:'DELETE', headers:H}); loadApps(); }
+async function loadUsers() {
+  const users = await fetch('/api/admin/users', {headers:{'X-Admin-Token':'admin123'}}).then(r=>r.json());
+  if(!Array.isArray(users)) return;
+  document.getElementById('users-tbody').innerHTML = users.length ? users.map(u => `<tr><td style="padding:8px;border-bottom:1px solid #f5f7fa">${u.id}</td><td style="padding:8px;border-bottom:1px solid #f5f7fa">${u.username}</td><td style="padding:8px;border-bottom:1px solid #f5f7fa;color:#999">${(u.created_at||'').slice(0,10)}</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center;padding:20px;color:#999">暂无用户</td></tr>';
+}
+async function changePwd(){
+  const oldPwd = document.getElementById('pwd-old').value;
+  const newPwd = document.getElementById('pwd-new').value;
+  const newPwd2 = document.getElementById('pwd-new2').value;
+  if(!oldPwd || !newPwd){ alert('请填写完整'); return; }
+  if(newPwd.length < 4){ alert('新密码至少4位'); return; }
+  if(newPwd !== newPwd2){ alert('两次输入的新密码不一致'); return; }
+  const res = await fetch('/api/admin/change-password', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({old_password: oldPwd, new_password: newPwd})
+  });
+  const data = await res.json();
+  if(res.ok){
+    alert('密码修改成功！下次登录请用新密码。');
+    document.getElementById('pwd-old').value = '';
+    document.getElementById('pwd-new').value = '';
+    document.getElementById('pwd-new2').value = '';
+  } else {
+    alert(data.error || '修改失败');
+  }
+}
+loadConfig(); loadApps(); loadUsers();
+</script>
+
+<div class="modal" id="app-edit-modal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>编辑应用</h3><div class="modal-close" onclick="closeAppEdit()">✕</div></div>
+    <input type="hidden" id="ae-id">
+    <div class="form-group"><label>应用名称</label><input id="ae-name" placeholder="应用名称"></div>
+    <div class="form-group"><label>描述</label><textarea id="ae-desc" rows="3" placeholder="应用描述"></textarea></div>
+    <div class="form-group"><label>分类</label><input id="ae-cat" placeholder="所属分类"></div>
+    <div class="form-group"><label>图标 URL</label><input id="ae-icon" placeholder="图标 URL"></div>
+    <div class="form-group"><label>下载链接</label><input id="ae-url" placeholder="下载链接 URL"></div>
+    <button class="btn btn-primary" style="width:100%;padding:14px" onclick="saveAppEdit()">保存修改</button>
+  </div>
+</div>
+</body>
+</html>
