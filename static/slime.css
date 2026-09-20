@@ -132,7 +132,7 @@ body[data-theme="blue"]{
 .tool-card .deco, .tool-card .tool-icon, .tool-card img{display:none !important}
 
 /* ==== App 内 top/bottom 紧凑 ==== */
-.top-bar{padding:calc(6px + var(--sbt,0px)) 20px 12px !important}
+
 .top-bar h1{font-size:20px !important;line-height:1.1 !important;margin:0 !important}
 .top-bar p{font-size:11px !important;margin-top:3px !important;opacity:.7 !important}
 .top-bar .share-icon{top:calc(10px + var(--sbt,0px)) !important}
@@ -140,3 +140,15 @@ body[data-theme="blue"]{
 
 /* 底部系统导航栏 —— 用 tab-bar 主题色填充 */
 .tab-bar{padding-bottom:calc(6px + var(--sbb,0px)) !important;background:var(--card-bg) !important}
+
+/* ===== 顶栏最终样式 ===== */
+
+.top-bar h1{font-size:22px !important;line-height:1.15 !important;margin:0 !important}
+.top-bar p{font-size:11px !important;margin-top:3px !important;opacity:.75 !important}
+.top-bar .share-icon{top:calc(14px + var(--sbt,0px)) !important}
+
+/* 顶栏最终：padding-top 固定 12px（状态栏由 APP 顶条负责） */
+.top-bar{padding:12px 20px 14px !important}
+.top-bar h1{font-size:22px !important;line-height:1.15 !important;margin:0 !important}
+.top-bar p{font-size:11px !important;margin-top:3px !important;opacity:.75 !important}
+.top-bar .share-icon{top:14px !important}

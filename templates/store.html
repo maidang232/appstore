@@ -11,7 +11,7 @@ body{background:var(--bg);color:var(--text);padding-bottom:60px;overflow-x:hidde
 .page{display:none}.page.active{display:block}
 .icon{width:22px;height:22px;display:block}
 .icon-lg{width:28px;height:28px}
-.top-bar{background:var(--grad);padding:calc(4px + var(--sbt, 0px)) 20px 18px;color:var(--top-text);border-radius:0 0 24px 24px;position:relative;box-shadow:0 4px 16px rgba(0,0,0,.12);transition:background .3s}
+.top-bar{background:var(--grad);padding:calc(6px + var(--sbt,0px)) 20px 14px;color:var(--top-text);color:var(--top-text);border-radius:0 0 24px 24px;position:relative;box-shadow:0 4px 16px rgba(0,0,0,.12);transition:background .3s}
 .top-bar h1{font-size:26px;font-weight:800;letter-spacing:1px;line-height:1.1}
 .top-bar p{font-size:13px;opacity:.6;margin-top:5px}
 .top-bar .share-icon{position:absolute;right:20px;top:calc(10px + var(--sbt, 0px));cursor:pointer;opacity:.9}
@@ -299,10 +299,21 @@ const THEMES = [
   {id:'purple', name:'梦幻紫', swatch:'linear-gradient(135deg,#C19AD6,#8B5CF6)'},
   {id:'blue', name:'天空蓝', swatch:'linear-gradient(135deg,#9AC1D6,#3B82F6)'}
 ];
+
+function syncStatusBar(id){
+  if(!window.AB || !window.AB.setStatusBarColor) return;
+  var colors = {
+    'light':'#7CB342','dark':'#0F1A08','gold':'#C9A44B',
+    'red':'#C94B4B','purple':'#8B5CF6','blue':'#3B82F6'
+  };
+  try{ window.AB.setStatusBarColor(colors[id] || '#7CB342'); }catch(e){}
+}
+
 function applyTheme(id){
   document.body.setAttribute('data-theme', id);
   localStorage.setItem('app_theme', id);
   renderThemePanel();
+  syncStatusBar(id);
   updateAndroidBars();
 }
 function updateAndroidBars(){
@@ -479,16 +490,33 @@ function renderToolsContent(tabs){
     return `<div class="tool-card" style="background-image:url('${bgImg}');background-position:${bgPos};${bgClr?'background-color:'+bgClr:''}" onclick="openTool(${i})"><div class="tool-card-overlay" style="${bgImg?'background:rgba(255,255,255,0.55)':'background:transparent'}"></div><div class="tool-title">${escapeHtml(x.title)}</div><div class="tool-sub">${escapeHtml(x.sub||x.desc||'')}</div><svg class="deco" style="width:52px;height:52px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>`;
   }).join('')}</div>`;
 }
+
+
+function downloadApp(url){
+  if(!url) return;
+  rememberTabBeforeJump();
+  location.href = url;
+}
+function rememberTabBeforeJump(){
+  try{
+    var page = 'home';
+    if(document.getElementById('page-apps').classList.contains('active')) page = 'apps';
+    else if(document.getElementById('page-tools').classList.contains('active')) page = 'tools';
+    else if(document.getElementById('page-my').classList.contains('active')) page = 'my';
+    var extra = page === 'tools' ? ('=' + encodeURIComponent(currentToolsTab||'')) : '';
+    history.replaceState(null, '', '#back=' + page + extra);
+  }catch(e){}
+}
+
 function openTool(i){
   const tab = config.tools_tabs && config.tools_tabs.find(t=>t.name===currentToolsTab);
   if(!tab || !tab.cards || !tab.cards[i]) return;
   const c = tab.cards[i];
   if (c.link && c.link.trim()) {
     let url = c.link.trim();
-    if(!/^https?:\/\//i.test(url)) {
-      url = 'https://' + url;
-    }
-    window.open(url, '_blank');
+    if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    rememberTabBeforeJump();
+    location.href = url;
   } else {
     showInfo(c.title || '工具', c.desc || c.sub || '暂无更多信息');
   }
@@ -541,7 +569,7 @@ async function showAppDetail(id){
       <button class="btn-fav ${favOn?'on':''}" data-fav-id="${a.id}" onclick="toggleFav(${a.id}, event);this.className='btn-fav '+(isFav(${a.id})?'on':'')">${iconSvg('heart')}</button>
     </div>
     <div style="font-size:13px;color:var(--text-sub);line-height:1.8;margin-bottom:14px">${escapeHtml(a.description||'暂无描述')}</div>
-    ${a.download_url?`<a href="${a.download_url}" target="_blank" style="display:block;text-align:center;background:var(--primary);color:var(--primary-text);padding:12px;border-radius:12px;text-decoration:none;font-weight:700">立即下载</a>`:''}
+    ${a.download_url?`<a href="javascript:void(0)" onclick="downloadApp(\x27${a.download_url.replace(/\x27/g,"")}\x27)" style="display:block;text-align:center;background:var(--primary);color:var(--primary-text);padding:12px;border-radius:12px;text-decoration:none;font-weight:700">立即下载</a>`:''}
   `;
   document.getElementById('modal').classList.add('show');
 }
@@ -677,6 +705,32 @@ async function doLogout(){
   setTimeout(function(){ if(typeof updateAndroidBars==='function') updateAndroidBars(); }, 600);
 })();
 loadConfig().then(()=>{ renderStarOfDay(); });
+
+(function restoreFromHash(){
+  var h = location.hash || '';
+  if(h.indexOf('#back=') === 0){
+    var rest = h.substring(6);
+    var page = rest, toolTab = '';
+    if(rest.indexOf('=') > -1){
+      page = rest.substring(0, rest.indexOf('='));
+      toolTab = decodeURIComponent(rest.substring(rest.indexOf('=')+1));
+    }
+    if(page === 'tools' && toolTab) currentToolsTab = toolTab;
+    var tries = 0;
+    var timer = setInterval(function(){
+      tries++;
+      var tabs = document.querySelectorAll('.tab-item');
+      if(tabs.length >= 4){
+        clearInterval(timer);
+        var idx = page === 'apps' ? 1 : page === 'tools' ? 2 : page === 'my' ? 3 : 0;
+        switchTab(page, tabs[idx]);
+        try { history.replaceState(null, '', location.pathname); } catch(e){}
+      }
+      if(tries > 30) clearInterval(timer);
+    }, 100);
+  }
+})();
+
 loadApps();
 checkLogin();
 renderMyGrid();
@@ -779,17 +833,35 @@ function verNum(v){
 }
 async function checkAppUpdate(){
   try{
-    var cur = (window.AB && window.AB.getVersionName) ? window.AB.getVersionName() : '1.0';
     var info = await fetch('/api/client-version').then(r=>r.json());
-    if(info.version_name && verNum(info.version_name) > verNum(cur) && info.download_url){
-      document.getElementById('update-body').innerHTML =
-        '<div style="font-size:13px;color:var(--text-sub);margin-bottom:8px">当前版本：v' + cur + '  →  最新版：v' + info.version_name + '</div>' +
-        '<div style="white-space:pre-wrap;font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">' + (info.notes||'本次更新优化了体验') + '</div>' +
-        '<a href="' + info.download_url + '" target="_blank" style="display:block;text-align:center;background:var(--primary);color:var(--primary-text);padding:12px;border-radius:12px;text-decoration:none;font-weight:700">立即下载更新</a>';
-      if(info.force){
-        document.getElementById('update-close').style.display = 'none';
+    if(!info.version_name || !info.download_url) return;
+
+    var isApp = (window.AB && typeof window.AB.getVersionName === 'function');
+
+    if(isApp){
+      // APP 内：对比版本号
+      var cur = window.AB.getVersionName() || '1.0';
+      if(verNum(info.version_name) > verNum(cur)){
+        document.getElementById('update-body').innerHTML =
+          '<div style="font-size:13px;color:var(--text-sub);margin-bottom:8px">当前版本：v' + cur + '  →  最新版：v' + info.version_name + '</div>' +
+          '<div style="white-space:pre-wrap;font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">' + (info.notes||'本次更新优化了体验') + '</div>' +
+          '<a href="' + info.download_url + '" target="_blank" style="display:block;text-align:center;background:var(--primary);color:var(--primary-text);padding:12px;border-radius:12px;text-decoration:none;font-weight:700">立即下载更新</a>';
+        if(info.force){
+          document.getElementById('update-close').style.display = 'none';
+        }
+        document.getElementById('update-modal').classList.add('show');
       }
+    }else{
+      // 网页版：直接提示下载 APP（只提示一次，除非版本变化）
+      var seen = localStorage.getItem('seen_app_version') || '';
+      if(seen === info.version_name) return;
+      document.getElementById('update-body').innerHTML =
+        '<div style="font-size:13px;color:var(--text-sub);margin-bottom:8px">下载客户端体验完整功能</div>' +
+        '<div style="font-size:12px;color:var(--text-sub);line-height:1.6;margin-bottom:14px">安装 Slime 客户端，享受更快更流畅的浏览体验。</div>' +
+        '<a href="' + info.download_url + '" target="_blank" style="display:block;text-align:center;background:var(--primary);color:var(--primary-text);padding:12px;border-radius:12px;text-decoration:none;font-weight:700">下载最新版 APP</a>';
+      document.getElementById('update-close').style.display = '';
       document.getElementById('update-modal').classList.add('show');
+      localStorage.setItem('seen_app_version', info.version_name);
     }
   }catch(e){}
 }
