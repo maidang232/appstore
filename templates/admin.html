@@ -296,6 +296,22 @@ async function saveClientVersion(){
   alert('已保存！');
 }
 
+
+async function uploadAppIcon(){
+  var fi = document.getElementById('ae-icon-file');
+  var f = fi.files[0];
+  if(!f) return;
+  var fd = new FormData();
+  fd.append('file', f);
+  var res = await fetch('/api/upload', {method:'POST', headers:{'X-Admin-Token':'admin123'}, body:fd});
+  var data = await res.json();
+  if(data.url){
+    document.getElementById('ae-icon').value = data.url;
+    var pv = document.getElementById('ae-icon-preview');
+    pv.style.backgroundImage = 'url('+data.url+')';
+    pv.innerHTML = '';
+  } else { alert('上传失败'); }
+}
 function openModal(type, index = -1) {
   editType = type; editIndex = index;
   document.getElementById('modal-title').innerText = (index === -1 ? '添加' : '编辑') + (type === 'banner' ? '轮播图' : type === 'notice' ? '公告卡片' : '工具卡片');
@@ -552,6 +568,9 @@ function editApp(idx) {
   document.getElementById('ae-desc').value = a.description || '';
   document.getElementById('ae-cat').value = a.category || '';
   document.getElementById('ae-icon').value = a.icon_url || '';
+  var aeipv = document.getElementById('ae-icon-preview');
+  if(a.icon_url){ aeipv.style.backgroundImage = 'url('+a.icon_url+')'; aeipv.innerHTML=''; }
+  else { aeipv.style.backgroundImage=''; aeipv.innerHTML='未设置'; }
   document.getElementById('ae-url').value = a.download_url || '';
   document.getElementById('app-edit-modal').classList.add('show');
 }
@@ -647,7 +666,10 @@ loadConfig(); loadApps(); loadUsers();
     <div class="form-group"><label>应用名称</label><input id="ae-name" placeholder="应用名称"></div>
     <div class="form-group"><label>描述</label><textarea id="ae-desc" rows="3" placeholder="应用描述"></textarea></div>
     <div class="form-group"><label>分类</label><input id="ae-cat" placeholder="所属分类"></div>
-    <div class="form-group"><label>图标 URL</label><input id="ae-icon" placeholder="图标 URL"></div>
+    <div class="form-group"><label>图标</label><input id="ae-icon" placeholder="图标 URL">
+<input type="file" id="ae-icon-file" accept="image/*" style="display:none" onchange="uploadAppIcon()">
+<button type="button" class="btn-add" style="margin-top:6px" onclick="document.getElementById('ae-icon-file').click()">📷 上传图标（1:1 PNG）</button>
+<div id="ae-icon-preview" style="width:60px;height:60px;background-size:contain;background-repeat:no-repeat;background-position:center;border-radius:8px;margin-top:8px;background-color:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px">未设置</div></div>
     <div class="form-group"><label>下载链接</label><input id="ae-url" placeholder="下载链接 URL"></div>
     <button class="btn btn-primary" style="width:100%;padding:14px" onclick="saveAppEdit()">保存修改</button>
   </div>
