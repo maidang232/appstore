@@ -29,8 +29,9 @@ body{background:var(--bg);color:var(--text);padding-bottom:60px;overflow-x:hidde
 .swiper-text p{font-size:13px;opacity:.85}
 .notice-bar{background:var(--top-bg);color:var(--top-text);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:18px;font-size:13px;overflow:hidden;white-space:nowrap}
 .notice-bar .icon{flex-shrink:0;color:var(--top-text);opacity:.9}
-.notice-text{animation:scroll 12s linear infinite;display:inline-block;font-weight:500}
-@keyframes scroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+.notice-scroll{flex:1;overflow:hidden;white-space:nowrap;min-width:0}
+.notice-text{display:inline-block;padding-left:100%;animation:scroll 12s linear infinite;font-weight:500}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 .section-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:800;margin:18px 0 12px 5px;color:var(--text)}
 .section-title .icon{color:var(--text)}
 .section-title::after{content:'';flex:1;height:1px;background:var(--border-2);margin-left:10px}
@@ -146,7 +147,7 @@ body{background:var(--bg);color:var(--text);padding-bottom:60px;overflow-x:hidde
     <div class="swiper" id="banner-swiper"></div>
     <div class="notice-bar">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-      <div class="notice-text" id="ui-notice-text"></div>
+      <div class="notice-scroll"><div class="notice-text" id="ui-notice-text"></div></div>
     </div>
     <div id="star-of-day" style="display:none"></div>
     <div class="lucky-btn" onclick="feelingLucky()">
@@ -867,6 +868,44 @@ async function checkAppUpdate(){
 }
 function closeUpdate(){ document.getElementById('update-modal').classList.remove('show'); }
 setTimeout(checkAppUpdate, 1000);
+</script>
+<script>
+/* auto-swipe-banner */
+(function(){
+  function startAuto(){
+    var swiper = document.getElementById('banner-swiper');
+    if(!swiper) return false;
+    var items = swiper.querySelectorAll('.swiper-item');
+    if(items.length < 2) return false;
+    if(swiper.dataset.__auto === '1') return true;
+    swiper.dataset.__auto = '1';
+    var idx = 0, timer = null, paused = false;
+    function go(){
+      if(paused) return;
+      var w = swiper.clientWidth;
+      if(w <= 0) return;
+      idx = (idx + 1) % items.length;
+      swiper.scrollTo({left: w * idx, behavior: 'smooth'});
+    }
+    function start(){ stop(); timer = setInterval(go, 1500); }
+    function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+    swiper.addEventListener('touchstart', function(){ paused = true; }, {passive:true});
+    swiper.addEventListener('touchend', function(){ paused = false; }, {passive:true});
+    swiper.addEventListener('mouseenter', function(){ paused = true; });
+    swiper.addEventListener('mouseleave', function(){ paused = false; });
+    swiper.addEventListener('scroll', function(){
+      var w = swiper.clientWidth;
+      if(w > 0) idx = Math.round(swiper.scrollLeft / w);
+    }, {passive:true});
+    start();
+    return true;
+  }
+  var tries = 0;
+  var t = setInterval(function(){
+    tries++;
+    if(startAuto() || tries > 40){ clearInterval(t); }
+  }, 500);
+})();
 </script>
 </body>
 </html>
