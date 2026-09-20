@@ -759,5 +759,42 @@ renderMyGrid();
   setTimeout(set, 300);
 })();
 </script>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="modal" id="update-modal" onclick="if(event.target===this && !window.__forceUpdate)closeUpdate()">
+  <div class="modal-content">
+    <div class="modal-header"><div class="modal-title">发现新版本</div><div class="modal-close" id="update-close" onclick="closeUpdate()">✕</div></div>
+    <div id="update-body"></div>
+  </div>
+</div>
+<script>
+function verNum(v){
+  if(!v) return 0;
+  var p = String(v).split('.').map(function(x){return parseInt(x)||0;});
+  return (p[0]||0)*10000 + (p[1]||0)*100 + (p[2]||0);
+}
+async function checkAppUpdate(){
+  try{
+    var cur = (window.AB && window.AB.getVersionName) ? window.AB.getVersionName() : '1.0';
+    var info = await fetch('/api/client-version').then(r=>r.json());
+    if(info.version_name && verNum(info.version_name) > verNum(cur) && info.download_url){
+      document.getElementById('update-body').innerHTML =
+        '<div style="font-size:13px;color:var(--text-sub);margin-bottom:8px">当前版本：v' + cur + '  →  最新版：v' + info.version_name + '</div>' +
+        '<div style="white-space:pre-wrap;font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">' + (info.notes||'本次更新优化了体验') + '</div>' +
+        '<a href="' + info.download_url + '" target="_blank" style="display:block;text-align:center;background:var(--primary);color:var(--primary-text);padding:12px;border-radius:12px;text-decoration:none;font-weight:700">立即下载更新</a>';
+      if(info.force){
+        document.getElementById('update-close').style.display = 'none';
+      }
+      document.getElementById('update-modal').classList.add('show');
+    }
+  }catch(e){}
+}
+function closeUpdate(){ document.getElementById('update-modal').classList.remove('show'); }
+setTimeout(checkAppUpdate, 1000);
+</script>
 </body>
 </html>

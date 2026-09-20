@@ -250,6 +250,20 @@ def api_user_stats():
     db.commit()
     return jsonify({'ok': True})
 
+
+@app.route('/api/client-version')
+def api_client_version():
+    db = get_db()
+    keys = ['client_version_name','client_update_url','client_update_notes','client_force_update']
+    rows = db.execute("SELECT key,value FROM config WHERE key IN (?,?,?,?)", keys).fetchall()
+    c = {r['key']: r['value'] for r in rows}
+    return jsonify({
+        'version_name': c.get('client_version_name', '1.0'),
+        'download_url': c.get('client_update_url', ''),
+        'notes': c.get('client_update_notes', ''),
+        'force': c.get('client_force_update', '0') == '1'
+    })
+
 @app.route('/admin')
 def admin():
     if not session.get('admin'): return redirect('/admin/login')
