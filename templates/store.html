@@ -129,11 +129,6 @@ body{background:var(--bg);color:var(--text);padding-bottom:60px;overflow-x:hidde
 .offline-tip{color:#666;font-size:12px;margin-top:16px;text-align:center;line-height:1.8}
 .offline-tip b{color:#f4a261}
 .offline-retry{margin-top:16px;padding:10px 24px;background:#f4a261;color:#1a1a1a;border:none;border-radius:20px;font-weight:700;cursor:pointer;font-size:14px}
-  body.in-app .top-bar{padding-top:calc(50px + env(safe-area-inset-top, 0px)) !important}
-body.in-app{padding-bottom:calc(60px + env(safe-area-inset-bottom, 0px)) !important}
-  :root{--status-bar:0px;--nav-bar:0px}
-body.in-app .top-bar{padding-top:calc(22px + var(--status-bar)) !important}
-body.in-app{padding-bottom:calc(60px + var(--nav-bar)) !important}
 </style>
 <link rel="stylesheet" href="/static/slime.css">
 </head>
@@ -738,16 +733,5 @@ renderMyGrid();
   }, true);
 })();
 </script>
-  <script>
-(function(){
-  if (window.AndroidBridge && window.AndroidBridge.getStatusBarHeight) {
-    var top = window.AndroidBridge.getStatusBarHeight();
-    var bot = window.AndroidBridge.getNavBarHeight();
-    if (top > 0) document.documentElement.style.setProperty('--status-bar', top + 'px');
-    if (bot > 0) document.documentElement.style.setProperty('--nav-bar', bot + 'px');
-    document.body.classList.add('in-app');
-  }
-})();
-</script>
-</body>
+  </body>
 </html>
