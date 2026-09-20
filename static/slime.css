@@ -5,38 +5,38 @@
   --top-bg:#7CB342;--top-text:#fff;--icon-bg:#7CB342;--icon-text:#fff;
   --shadow:0 4px 16px rgba(124,179,66,.18);
   --grad:linear-gradient(135deg,#AED581 0%,#7CB342 50%,#558B2F 100%);
-}
+--top-c1:#AED581;--top-c2:#558B2F;--bottom-c:#FFFFFF;}
 body[data-theme="dark"]{
   --bg:#0F1A08;--card-bg:#1A2910;--text:#DCEFC6;--text-sub:#9CCC65;--text-light:#558B2F;
   --border:#2A3D18;--border-2:#3A4D28;--top-bg:#1A2910;--top-text:#DCEFC6;
   --icon-bg:#7CB342;--icon-text:#fff;
   --grad:linear-gradient(135deg,#2E4A1A 0%,#0F1A08 100%);
   --shadow:0 4px 16px rgba(0,0,0,.4);
-}
+--top-c1:#2E4A1A;--top-c2:#0F1A08;--bottom-c:#1A2910;}
 body[data-theme="gold"]{
   --bg:#F5EFD8;--card-bg:#fff;--text:#3A2E0E;--text-sub:#8B7A3A;--text-light:#C9A44B;
   --border:#E8DFB9;--border-2:#D6C89A;--primary:#C9A44B;--primary-text:#fff;
   --top-bg:#C9A44B;--top-text:#fff;--icon-bg:#C9A44B;--icon-text:#fff;
   --grad:linear-gradient(135deg,#E8DFB9 0%,#C9A44B 100%);
-}
+--top-c1:#E8DFB9;--top-c2:#C9A44B;--bottom-c:#F5EFD8;}
 body[data-theme="red"]{
   --bg:#F5E0E0;--card-bg:#fff;--text:#3A0E0E;--text-sub:#8B3A3A;--text-light:#C94B4B;
   --border:#E8B9B9;--border-2:#D69A9A;--primary:#C94B4B;--primary-text:#fff;
   --top-bg:#C94B4B;--top-text:#fff;--icon-bg:#C94B4B;--icon-text:#fff;
   --grad:linear-gradient(135deg,#E8B9B9 0%,#C94B4B 100%);
-}
+--top-c1:#E8B9B9;--top-c2:#C94B4B;--bottom-c:#F5E0E0;}
 body[data-theme="purple"]{
   --bg:#EAE0F5;--card-bg:#fff;--text:#2A0E3A;--text-sub:#6B3A8B;--text-light:#9A4BC9;
   --border:#D6B9E8;--border-2:#C19AD6;--primary:#8B5CF6;--primary-text:#fff;
   --top-bg:#8B5CF6;--top-text:#fff;--icon-bg:#8B5CF6;--icon-text:#fff;
   --grad:linear-gradient(135deg,#C19AD6 0%,#8B5CF6 100%);
-}
+--top-c1:#C19AD6;--top-c2:#8B5CF6;--bottom-c:#EAE0F5;}
 body[data-theme="blue"]{
   --bg:#E0EEF5;--card-bg:#fff;--text:#0E2A3A;--text-sub:#3A6B8B;--text-light:#4B9AC9;
   --border:#B9D6E8;--border-2:#9AC1D6;--primary:#3B82F6;--primary-text:#fff;
   --top-bg:#3B82F6;--top-text:#fff;--icon-bg:#3B82F6;--icon-text:#fff;
   --grad:linear-gradient(135deg,#9AC1D6 0%,#3B82F6 100%);
-}
+--top-c1:#9AC1D6;--top-c2:#3B82F6;--bottom-c:#E0EEF5;}
 
 /* 卡片果冻挤压 */
 .app-card,.tool-card,.my-grid-card,.notice-card,.lucky-btn{

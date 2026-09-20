@@ -303,6 +303,17 @@ function applyTheme(id){
   document.body.setAttribute('data-theme', id);
   localStorage.setItem('app_theme', id);
   renderThemePanel();
+  updateAndroidBars();
+}
+function updateAndroidBars(){
+  if(!window.AndroidBridge || !window.AndroidBridge.setBars) return;
+  var s = getComputedStyle(document.body);
+  var c1 = s.getPropertyValue('--top-c1').trim();
+  var c2 = s.getPropertyValue('--top-c2').trim();
+  var cb = s.getPropertyValue('--bottom-c').trim();
+  if(c1 && c2 && cb){
+    try { window.AndroidBridge.setBars(c1, c2, cb); } catch(e){}
+  }
 }
 function openThemePanel(){ renderThemePanel(); document.getElementById('theme-modal').classList.add('show'); }
 function closeThemePanel(){ document.getElementById('theme-modal').classList.remove('show'); }
@@ -663,6 +674,7 @@ async function doLogout(){
 (function init(){
   const savedTheme = localStorage.getItem('app_theme') || 'light';
   document.body.setAttribute('data-theme', savedTheme);
+  setTimeout(function(){ if(typeof updateAndroidBars==='function') updateAndroidBars(); }, 600);
 })();
 loadConfig().then(()=>{ renderStarOfDay(); });
 loadApps();
