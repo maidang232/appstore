@@ -559,7 +559,7 @@ async function showAppDetail(id){
   pushHistory(a);
   const favOn = isFav(id);
   document.getElementById('modal-title').innerText = a.name;
-  document.getElementById('modal-body').innerHTML = `
+  document.getElementById('modal-body').innerHTML = `<div style="white-space:normal">
     <div style="display:flex;gap:12px;margin-bottom:12px;align-items:center">
       <div style="width:56px;height:56px;border-radius:14px;background:var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">${a.icon_url?`<img src="${a.icon_url}" style="width:100%;height:100%;object-fit:cover">`:'📦'}</div>
       <div style="flex:1">
@@ -570,7 +570,7 @@ async function showAppDetail(id){
     </div>
     <div style="font-size:13px;color:var(--text-sub);line-height:1.8;margin-bottom:14px">${escapeHtml(a.description||'暂无描述')}</div>
     ${a.download_url?`<a href="javascript:void(0)" onclick="downloadApp(\x27${a.download_url.replace(/\x27/g,"")}\x27)" style="display:block;text-align:center;background:var(--primary);color:var(--primary-text);padding:12px;border-radius:12px;text-decoration:none;font-weight:700">立即下载</a>`:''}
-  `;
+  </div>`;
   document.getElementById('modal').classList.add('show');
 }
 
