@@ -207,17 +207,6 @@ textarea{resize:vertical;min-height:80px}
     <button class="btn btn-primary" onclick="saveSpeed()" style="margin-top:10px">保存速度</button>
   </div>
   <div class="section">
-    <h2>卡片遮罩颜色</h2>
-    <div class="hint">图片上有标题时，图片上会盖一层半透明色，让文字清楚。默认黑色。</div>
-    <div class="color-picker-row" style="display:flex;align-items:center;gap:10px;margin-top:8px">
-      <input type="color" id="card-overlay-color" value="#000000" style="width:50px;height:40px;padding:2px;border-radius:8px">
-      <input type="range" id="card-overlay-alpha" min="0" max="100" value="40" style="flex:1" oninput="document.getElementById('card-overlay-alpha-val').innerText=this.value">
-      <span id="card-overlay-alpha-val" style="font-size:12px;color:#666">40</span>
-    </div>
-    <button class="btn btn-primary" onclick="saveCardOverlay()" style="margin-top:10px">保存遮罩颜色</button>
-  </div>
-
-  <div class="section">
     <h2>退出登录</h2>
     <div class="hint">退出后需要重新输入密码才能进入后台。</div>
     <button class="btn" style="background:#ff4757;color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;cursor:pointer;border:none" onclick="location.href='/admin/logout'">退出登录</button>
@@ -339,17 +328,6 @@ async function saveSpeed(){
   })});
   alert('已保存！');
 }
-async function saveCardOverlay(){
-  var c = document.getElementById('card-overlay-color').value;
-  var a = document.getElementById('card-overlay-alpha').value;
-  var r = parseInt(c.substr(1,2),16);
-  var g = parseInt(c.substr(3,2),16);
-  var b = parseInt(c.substr(5,2),16);
-  var rgba = 'rgba(' + r + ',' + g + ',' + b + ',' + (a/100) + ')';
-  await fetch('/api/config', {method:'POST', headers:H, body:JSON.stringify({card_overlay_color: rgba})});
-  alert('已保存！前台刷新即可看到效果。');
-}
-
 function openModal(type, index = -1) {
   editType = type; editIndex = index;
   document.getElementById('modal-title').innerText = (index === -1 ? '添加' : '编辑') + (type === 'banner' ? '轮播图' : type === 'notice' ? '公告卡片' : '工具卡片');
@@ -558,17 +536,6 @@ async function saveMyPage() {
 async function loadConfig() {
   config = await fetch('/api/config').then(r => r.json());
   document.getElementById('ui-home-title').value = config.home_title
-  try{
-    var co = config.card_overlay_color || 'rgba(0,0,0,0.4)';
-    var m = co.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
-    if(m){
-      var hex = '#' + [m[1],m[2],m[3]].map(function(x){return ('0'+parseInt(x).toString(16)).slice(-2)}).join('');
-      document.getElementById('card-overlay-color').value = hex;
-      var alpha = Math.round(parseFloat(m[4]) * 100);
-      document.getElementById('card-overlay-alpha').value = alpha;
-      document.getElementById('card-overlay-alpha-val').innerText = alpha;
-    }
-  }catch(e){}
   var nsV = config.notice_speed || '12';
   var bsV = config.banner_speed || '1.5';
   if(document.getElementById('notice-speed')){ document.getElementById('notice-speed').value = nsV; document.getElementById('notice-speed-val').innerText = nsV; }

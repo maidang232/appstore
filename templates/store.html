@@ -23,7 +23,7 @@ body{background:var(--bg);color:var(--text);padding-bottom:60px;overflow-x:hidde
 .swiper{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;border-radius:18px;margin-bottom:14px}
 .swiper::-webkit-scrollbar{display:none}
 .swiper-item{flex:0 0 100%;scroll-snap-align:start;height:170px;border-radius:18px;color:#fff;padding:24px;display:flex;flex-direction:column;justify-content:center;position:relative;box-shadow:0 6px 20px rgba(0,0,0,.15);background-size:cover;overflow:hidden;background-color:var(--top-bg)}
-.swiper-overlay{position:absolute;top:0;left:0;right:0;bottom:0;z-index:0}
+
 .swiper-text{position:relative;z-index:1}
 .swiper-text h2{font-size:22px;font-weight:800;margin-bottom:8px;text-shadow:0 2px 4px rgba(0,0,0,.4)}
 .swiper-text p{font-size:13px;opacity:.85}
@@ -37,7 +37,7 @@ body{background:var(--bg);color:var(--text);padding-bottom:60px;overflow-x:hidde
 .section-title::after{content:'';flex:1;height:1px;background:var(--border-2);margin-left:10px}
 .notice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .notice-card{border-radius:14px;padding:18px 16px;font-size:14px;font-weight:700;color:var(--text);white-space:pre-wrap;line-height:1.5;box-shadow:var(--shadow);cursor:pointer;background-size:cover;position:relative;overflow:hidden;background:var(--card-bg);border:1px solid var(--border)}
-.notice-card-overlay{position:absolute;top:0;left:0;right:0;bottom:0;z-index:0}
+
 .notice-card span{position:relative;z-index:1}
 .soft-tabs{display:flex;gap:10px;padding:14px 0 12px;overflow-x:auto;flex-wrap:nowrap}
 .soft-tabs::-webkit-scrollbar{display:none}
@@ -57,7 +57,7 @@ body{background:var(--bg);color:var(--text);padding-bottom:60px;overflow-x:hidde
 .btn-fav.on svg{fill:#e63946;stroke:#e63946}
 .tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:5px 0 15px}
 .tool-card{border-radius:16px;padding:16px;color:var(--text);display:flex;flex-direction:column;justify-content:space-between;min-height:110px;position:relative;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;background-size:cover;background:var(--card-bg);border:1px solid var(--border)}
-.tool-card-overlay{position:absolute;top:0;left:0;right:0;bottom:0;z-index:0}
+
 .tool-title{font-size:15px;font-weight:800;margin-bottom:6px;z-index:2;position:relative;color:var(--text)}
 .tool-sub{font-size:11px;color:var(--text-sub);line-height:1.4;z-index:2;position:relative}
 .tool-card .deco{position:absolute;right:8px;bottom:8px;z-index:1;opacity:.12;color:var(--text)}
@@ -144,6 +144,16 @@ body{background:var(--bg);color:var(--text);padding-bottom:60px;overflow-x:hidde
   background-size:100% 100% !important;
   background-position:center !important;
   background-repeat:no-repeat !important;
+}
+
+
+/* card-bg-img 用 img 标签当背景 */
+.card-bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;pointer-events:none;display:block}
+.swiper-item,.notice-card,.tool-card{position:relative !important;overflow:hidden !important}
+.swiper-item .swiper-text,
+.notice-card span,
+.tool-card .tool-title,.tool-card .tool-sub,.tool-card .deco{
+  z-index:1
 }
 </style>
 <link rel="stylesheet" href="/static/slime.css">
@@ -463,13 +473,13 @@ async function loadConfig(){
   if(c.home_banners){
     document.getElementById('banner-swiper').innerHTML = c.home_banners.map(b => {
       const bgImg = b.image || b.bg || ''; const bgPos = b.position || 'center'; const bgClr = b.color || '';
-      return `<div class="swiper-item" style="background-image:url('${bgImg}');background-position:center;background-size:100% 100%;background-repeat:no-repeat;${bgClr?'background-color:'+bgClr:''}"><div class="swiper-overlay" style="${bgImg?'background:var(--card-overlay, rgba(0,0,0,0.4))':'background:transparent'}"></div><div class="swiper-text"><h2>${escapeHtml(b.title||'')}</h2><p>${escapeHtml(b.desc||'')}</p></div></div>`;
+      return `<div class="swiper-item" style="${bgClr?'background-color:'+bgClr:''}">${bgImg?'<img class="card-bg-img" src="'+bgImg+'">':''}<div class="swiper-text"><h2>${escapeHtml(b.title||'')}</h2><p>${escapeHtml(b.desc||'')}</p></div></div>`;
     }).join('');
   }
   if(c.notice_cards){
     document.getElementById('notice-grid').innerHTML=c.notice_cards.map((x,i)=>{
       const bgImg = x.bg || x.image || ''; const bgPos = x.position || 'center'; const bgClr = x.color || '';
-      return `<div class="notice-card" style="background-image:url('${bgImg}');background-position:center;background-size:100% 100%;background-repeat:no-repeat;${bgClr?'background-color:'+bgClr:''}" onclick="openNotice(${i})"><div class="notice-card-overlay" style="${bgImg?'background:var(--card-overlay, rgba(0,0,0,0.4))':'background:transparent'}"></div><span>${escapeHtml(x.title)}</span></div>`;
+      return `<div class="notice-card" style="${bgClr?'background-color:'+bgClr:''}" onclick="openNotice(${i})">${bgImg?'<img class="card-bg-img" src="'+bgImg+'">':''}<span>${escapeHtml(x.title)}</span></div>`;
     }).join('');
   }
   if(c.software_tabs){
@@ -503,7 +513,7 @@ function renderToolsContent(tabs){
   if(cards.length === 0){ box.innerHTML='<div style="text-align:center;padding:50px 0;color:var(--text-light);font-size:14px">该标签暂无工具卡片</div>'; return; }
   box.innerHTML=`<div class="tools-grid">${cards.map((x,i)=>{
     const bgImg = x.bg || x.image || ''; const bgPos = x.position || 'center'; const bgClr = x.color || '';
-    return `<div class="tool-card" style="background-image:url('${bgImg}');background-position:center;background-size:100% 100%;background-repeat:no-repeat;${bgClr?'background-color:'+bgClr:''}" onclick="openTool(${i})"><div class="tool-card-overlay" style="${bgImg?'background:var(--card-overlay, rgba(0,0,0,0.4))':'background:transparent'}"></div><div class="tool-title">${escapeHtml(x.title)}</div><div class="tool-sub">${escapeHtml(x.sub||x.desc||'')}</div><svg class="deco" style="width:52px;height:52px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>`;
+    return `<div class="tool-card" style="${bgClr?'background-color:'+bgClr:''}" onclick="openTool(${i})">${bgImg?'<img class="card-bg-img" src="'+bgImg+'">':''}<div class="tool-title">${escapeHtml(x.title)}</div><div class="tool-sub">${escapeHtml(x.sub||x.desc||'')}</div><svg class="deco" style="width:52px;height:52px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>`;
   }).join('')}</div>`;
 }
 
@@ -937,16 +947,6 @@ setTimeout(checkAppUpdate, 1000);
   }
   setTimeout(applySpeed, 800);
   setTimeout(applySpeed, 2000);
-})();
-</script>
-<script>
-/* card-overlay-loader */
-(function(){
-  fetch('/api/config').then(function(r){return r.json()}).then(function(c){
-    if(c.card_overlay_color){
-      document.documentElement.style.setProperty('--card-overlay', c.card_overlay_color);
-    }
-  }).catch(function(){});
 })();
 </script>
 </body>
