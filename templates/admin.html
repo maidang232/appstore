@@ -177,9 +177,32 @@ textarea{resize:vertical;min-height:80px}
 </div>
 
 <div id="tab-settings" class="tab-content">
+  <div class="section">
+    <h2>修改后台密码</h2>
+    <div class="hint">修改后下次登录需用新密码。</div>
+    <input type="password" id="pwd-old" placeholder="原密码">
+    <input type="password" id="pwd-new" placeholder="新密码（至少4位）">
+    <input type="password" id="pwd-new2" placeholder="再次输入新密码">
+    <button class="btn btn-primary" onclick="changePwd()">确认修改</button>
+  </div>
+  <div class="section">
+    <h2>推送更新</h2>
+    <div class="hint">APP 会对比自己的版本名与下方填写的版本名，低于才弹更新窗口。</div>
+    <label style="font-size:13px;font-weight:600;color:#333;display:block;margin-bottom:4px">最新版本名（例如 1.0.19）</label>
+    <input id="client-version-name" placeholder="1.0.19">
+    <label style="font-size:13px;font-weight:600;color:#333;display:block;margin-top:10px;margin-bottom:4px">下载链接（APK 网址）</label>
+    <input id="client-update-url" placeholder="https://.../SLIME.apk">
+    <label style="font-size:13px;font-weight:600;color:#333;display:block;margin-top:10px;margin-bottom:4px">更新说明</label>
+    <textarea id="client-update-notes" rows="4" placeholder="1. 新增xxx&#10;2. 修复xxx"></textarea>
+    <div style="margin-top:10px"><input type="checkbox" id="client-force-update" style="width:auto;display:inline"><label for="client-force-update" style="font-size:14px;color:#555"> 强制更新（不可关闭）</label></div>
+    <button class="btn btn-primary" onclick="saveClientVersion()" style="margin-top:10px">保存</button>
+  </div>
+  <div class="section">
+    <h2>退出登录</h2>
+    <div class="hint">退出后需要重新输入密码才能进入后台。</div>
+    <button class="btn" style="background:#ff4757;color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;cursor:pointer;border:none" onclick="location.href='/admin/logout'">退出登录</button>
   </div>
 </div>
-
 <div class="modal" id="edit-modal">
   <div class="modal-content">
     <div class="modal-header"><h3 id="modal-title">编辑</h3><div class="modal-close" onclick="closeModal('edit-modal')">✕</div></div>
