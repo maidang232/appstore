@@ -836,11 +836,11 @@ async function checkAppUpdate(){
     var info = await fetch('/api/client-version').then(r=>r.json());
     if(!info.version_name || !info.download_url) return;
 
-    var isApp = (window.AB && typeof window.AB.getVersionName === 'function');
+    var isApp = !!window.AB;
 
     if(isApp){
       // APP 内：对比版本号
-      var cur = window.AB.getVersionName() || '1.0';
+      var cur = (window.AB && typeof window.AB.getVersionName === 'function') ? (window.AB.getVersionName() || '1.0') : '1.0';
       if(verNum(info.version_name) > verNum(cur)){
         document.getElementById('update-body').innerHTML =
           '<div style="font-size:13px;color:var(--text-sub);margin-bottom:8px">当前版本：v' + cur + '  →  最新版：v' + info.version_name + '</div>' +
