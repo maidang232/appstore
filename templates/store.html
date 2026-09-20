@@ -130,6 +130,21 @@ body{background:var(--bg);color:var(--text);padding-bottom:60px;overflow-x:hidde
 .offline-tip{color:#666;font-size:12px;margin-top:16px;text-align:center;line-height:1.8}
 .offline-tip b{color:#f4a261}
 .offline-retry{margin-top:16px;padding:10px 24px;background:#f4a261;color:#1a1a1a;border:none;border-radius:20px;font-weight:700;cursor:pointer;font-size:14px}
+
+.swiper-item{background-origin:border-box !important;background-clip:border-box !important;background-size:cover !important;background-position:center !important;background-repeat:no-repeat !important}
+.notice-card{background-origin:border-box !important;background-clip:border-box !important;background-size:cover !important;background-position:center !important;background-repeat:no-repeat !important}
+.tool-card{background-origin:border-box !important;background-clip:border-box !important;background-size:cover !important;background-position:center !important;background-repeat:no-repeat !important}
+
+
+
+/* 图片铺满+边框+底色 */
+.notice-card,.tool-card,.swiper-item{
+  background-origin:border-box !important;
+  background-clip:border-box !important;
+  background-size:100% 100% !important;
+  background-position:center !important;
+  background-repeat:no-repeat !important;
+}
 </style>
 <link rel="stylesheet" href="/static/slime.css">
 </head>
@@ -448,13 +463,13 @@ async function loadConfig(){
   if(c.home_banners){
     document.getElementById('banner-swiper').innerHTML = c.home_banners.map(b => {
       const bgImg = b.image || b.bg || ''; const bgPos = b.position || 'center'; const bgClr = b.color || '';
-      return `<div class="swiper-item" style="background-image:url('${bgImg}');background-position:${bgPos};${bgClr?'background-color:'+bgClr:''}"><div class="swiper-overlay" style="${bgImg?'background:rgba(0,0,0,0.45)':'background:transparent'}"></div><div class="swiper-text"><h2>${escapeHtml(b.title||'')}</h2><p>${escapeHtml(b.desc||'')}</p></div></div>`;
+      return `<div class="swiper-item" style="background-image:url('${bgImg}');background-position:center;background-size:100% 100%;background-repeat:no-repeat;${bgClr?'background-color:'+bgClr:''}"><div class="swiper-overlay" style="${bgImg?'background:var(--card-overlay, rgba(0,0,0,0.4))':'background:transparent'}"></div><div class="swiper-text"><h2>${escapeHtml(b.title||'')}</h2><p>${escapeHtml(b.desc||'')}</p></div></div>`;
     }).join('');
   }
   if(c.notice_cards){
     document.getElementById('notice-grid').innerHTML=c.notice_cards.map((x,i)=>{
       const bgImg = x.bg || x.image || ''; const bgPos = x.position || 'center'; const bgClr = x.color || '';
-      return `<div class="notice-card" style="background-image:url('${bgImg}');background-position:${bgPos};${bgClr?'background-color:'+bgClr:''}" onclick="openNotice(${i})"><div class="notice-card-overlay" style="${bgImg?'background:rgba(255,255,255,0.65)':'background:transparent'}"></div><span>${escapeHtml(x.title)}</span></div>`;
+      return `<div class="notice-card" style="background-image:url('${bgImg}');background-position:center;background-size:100% 100%;background-repeat:no-repeat;${bgClr?'background-color:'+bgClr:''}" onclick="openNotice(${i})"><div class="notice-card-overlay" style="${bgImg?'background:var(--card-overlay, rgba(0,0,0,0.4))':'background:transparent'}"></div><span>${escapeHtml(x.title)}</span></div>`;
     }).join('');
   }
   if(c.software_tabs){
@@ -488,7 +503,7 @@ function renderToolsContent(tabs){
   if(cards.length === 0){ box.innerHTML='<div style="text-align:center;padding:50px 0;color:var(--text-light);font-size:14px">该标签暂无工具卡片</div>'; return; }
   box.innerHTML=`<div class="tools-grid">${cards.map((x,i)=>{
     const bgImg = x.bg || x.image || ''; const bgPos = x.position || 'center'; const bgClr = x.color || '';
-    return `<div class="tool-card" style="background-image:url('${bgImg}');background-position:${bgPos};${bgClr?'background-color:'+bgClr:''}" onclick="openTool(${i})"><div class="tool-card-overlay" style="${bgImg?'background:rgba(255,255,255,0.55)':'background:transparent'}"></div><div class="tool-title">${escapeHtml(x.title)}</div><div class="tool-sub">${escapeHtml(x.sub||x.desc||'')}</div><svg class="deco" style="width:52px;height:52px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>`;
+    return `<div class="tool-card" style="background-image:url('${bgImg}');background-position:center;background-size:100% 100%;background-repeat:no-repeat;${bgClr?'background-color:'+bgClr:''}" onclick="openTool(${i})"><div class="tool-card-overlay" style="${bgImg?'background:var(--card-overlay, rgba(0,0,0,0.4))':'background:transparent'}"></div><div class="tool-title">${escapeHtml(x.title)}</div><div class="tool-sub">${escapeHtml(x.sub||x.desc||'')}</div><svg class="deco" style="width:52px;height:52px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>`;
   }).join('')}</div>`;
 }
 
@@ -922,6 +937,16 @@ setTimeout(checkAppUpdate, 1000);
   }
   setTimeout(applySpeed, 800);
   setTimeout(applySpeed, 2000);
+})();
+</script>
+<script>
+/* card-overlay-loader */
+(function(){
+  fetch('/api/config').then(function(r){return r.json()}).then(function(c){
+    if(c.card_overlay_color){
+      document.documentElement.style.setProperty('--card-overlay', c.card_overlay_color);
+    }
+  }).catch(function(){});
 })();
 </script>
 </body>
