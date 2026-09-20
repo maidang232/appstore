@@ -119,7 +119,7 @@ textarea{resize:vertical;min-height:80px}
     <h2>添加应用</h2>
     <input id="app-name" placeholder="应用名称 *">
     <input id="app-desc" placeholder="描述">
-    <input id="app-cat" placeholder="所属分类">
+    <select id="app-cat" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #e8eaf0;background:#fafbfd;font-size:13px"></select>
     <input id="app-url" placeholder="下载链接 URL">
     <button class="btn btn-primary" onclick="addApp()">添加应用</button>
   </div>
@@ -328,6 +328,19 @@ async function saveSpeed(){
   })});
   alert('已保存！');
 }
+
+function fillCategoryOptions(){
+  var tabs = (tempData.softwareTabs || []).filter(function(x){return x && x !== '全部';});
+  var opts = '<option value="">-- 选择分类 --</option>';
+  tabs.forEach(function(t){
+    opts += '<option value="' + t + '">' + t + '</option>';
+  });
+  var a = document.getElementById('app-cat');
+  var b = document.getElementById('ae-cat');
+  if(a) a.innerHTML = opts;
+  if(b) b.innerHTML = opts;
+}
+
 function openModal(type, index = -1) {
   editType = type; editIndex = index;
   document.getElementById('modal-title').innerText = (index === -1 ? '添加' : '编辑') + (type === 'banner' ? '轮播图' : type === 'notice' ? '公告卡片' : '工具卡片');
@@ -570,6 +583,7 @@ async function loadConfig() {
   if (config.home_banners) tempData.banners = config.home_banners.map(b => ({ title: b.title||'', desc: b.desc||'', link: b.link||'', bg: b.image||b.bg||'', position: b.position||'center', color: b.color||'#f0f0f0' }));
   if (config.notice_cards) tempData.notices = config.notice_cards.map(c => ({ title: c.title||'', desc: c.content || c.desc || '', bg: c.bg||c.image||'', position: c.position||'center', color: c.color||'#f0f0f0' }));
   if (config.software_tabs) tempData.softwareTabs = config.software_tabs.split(',').map(s=>s.trim()).filter(s=>s);
+  fillCategoryOptions();
   if (config.tools_tabs) {
     tempData.toolsTabs = config.tools_tabs.map((t, i) => {
       let cards = t.cards || [];
@@ -599,6 +613,7 @@ function editApp(idx) {
   document.getElementById('ae-id').value = a.id;
   document.getElementById('ae-name').value = a.name || ''; document.getElementById('ae-desc').value = a.description || '';
   document.getElementById('ae-desc').value = a.description || '';
+  fillCategoryOptions();
   document.getElementById('ae-cat').value = a.category || '';
   document.getElementById('ae-icon').value = a.icon_url || '';
   var aeipv = document.getElementById('ae-icon-preview');
@@ -698,7 +713,7 @@ loadConfig(); loadApps(); loadUsers();
     <input type="hidden" id="ae-id">
     <div class="form-group"><label>应用名称</label><input id="ae-name" placeholder="应用名称"></div>
     <div class="form-group"><label>描述</label><textarea id="ae-desc" rows="3" placeholder="应用描述"></textarea></div>
-    <div class="form-group"><label>分类</label><input id="ae-cat" placeholder="所属分类"></div>
+    <div class="form-group"><label>分类</label><select id="ae-cat" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #e8eaf0;background:#fafbfd;font-size:13px"></select></div>
     <div class="form-group"><label>图标</label><input id="ae-icon" placeholder="图标 URL">
 <input type="file" id="ae-icon-file" accept="image/*" style="display:none" onchange="uploadAppIcon()">
 <button type="button" class="btn-add" style="margin-top:6px" onclick="document.getElementById('ae-icon-file').click()">📷 上传图标（1:1 PNG）</button>
