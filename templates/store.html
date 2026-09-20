@@ -887,8 +887,8 @@ setTimeout(checkAppUpdate, 1000);
       idx = (idx + 1) % items.length;
       swiper.scrollTo({left: w * idx, behavior: 'smooth'});
     }
-    function start(){ stop(); timer = setInterval(go, 1500); }
-    function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+    function start(){ stop(); (function loop(){ go(); timer = setTimeout(loop, window.__bannerSpeed || 1500); })(); }
+    function stop(){ if(timer){ clearTimeout(timer); timer = null; } }
     swiper.addEventListener('touchstart', function(){ paused = true; }, {passive:true});
     swiper.addEventListener('touchend', function(){ paused = false; }, {passive:true});
     swiper.addEventListener('mouseenter', function(){ paused = true; });
@@ -905,6 +905,23 @@ setTimeout(checkAppUpdate, 1000);
     tries++;
     if(startAuto() || tries > 40){ clearInterval(t); }
   }, 500);
+})();
+</script>
+<script>
+/* speed-loader-script */
+(function(){
+  function applySpeed(){
+    fetch('/api/config').then(function(r){return r.json()}).then(function(c){
+      try{
+        var nsSec = parseFloat(c.notice_speed) || 12;
+        var el = document.querySelector('.notice-text');
+        if(el) el.style.animationDuration = nsSec + 's';
+        window.__bannerSpeed = (parseFloat(c.banner_speed) || 1.5) * 1000;
+      }catch(e){}
+    }).catch(function(){});
+  }
+  setTimeout(applySpeed, 800);
+  setTimeout(applySpeed, 2000);
 })();
 </script>
 </body>
