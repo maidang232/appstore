@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>应用商店</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,sans-serif}
@@ -11,10 +11,10 @@ body{background:var(--bg);color:var(--text);padding-bottom:60px;overflow-x:hidde
 .page{display:none}.page.active{display:block}
 .icon{width:22px;height:22px;display:block}
 .icon-lg{width:28px;height:28px}
-.top-bar{background:var(--grad);padding:50px 20px 34px;color:var(--top-text);border-radius:0 0 24px 24px;position:relative;box-shadow:0 4px 16px rgba(0,0,0,.12);transition:background .3s}
-.top-bar h1{font-size:26px;font-weight:800;letter-spacing:1px}
+.top-bar{background:var(--grad);padding:calc(4px + var(--sbt, 0px)) 20px 18px;color:var(--top-text);border-radius:0 0 24px 24px;position:relative;box-shadow:0 4px 16px rgba(0,0,0,.12);transition:background .3s}
+.top-bar h1{font-size:26px;font-weight:800;letter-spacing:1px;line-height:1.1}
 .top-bar p{font-size:13px;opacity:.6;margin-top:5px}
-.top-bar .share-icon{position:absolute;right:20px;top:26px;cursor:pointer;opacity:.9}
+.top-bar .share-icon{position:absolute;right:20px;top:calc(10px + var(--sbt, 0px));cursor:pointer;opacity:.9}
 .container{padding:0 15px;margin-top:15px}
 .search-box{position:relative;margin-bottom:12px}
 .search-box input{width:100%;padding:12px 16px 12px 44px;border-radius:24px;border:none;background:var(--card-bg);color:var(--text);font-size:14px;outline:none;box-shadow:var(--shadow)}
@@ -745,5 +745,19 @@ renderMyGrid();
   }, true);
 })();
 </script>
-  </body>
+  <script>
+(function(){
+  function set(){
+    if(window.AB && window.AB.getTop){
+      var t = window.AB.getTop();
+      var b = window.AB.getBottom();
+      if(t>0) document.documentElement.style.setProperty('--sbt', t+'px');
+      if(b>0){document.body.style.paddingBottom=(60+b)+'px';document.documentElement.style.setProperty('--sbb', b+'px');}
+    }
+  }
+  set();
+  setTimeout(set, 300);
+})();
+</script>
+</body>
 </html>
