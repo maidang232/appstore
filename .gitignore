@@ -7,3 +7,4 @@ static/uploads/*
 venv/
 .venv/
 .DS_Store
+.bak_*

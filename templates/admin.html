@@ -512,12 +512,12 @@ function openModal(type, index = -1) {
         if(ect2) ect2.checked = false;
         document.getElementById('edit-color').value = item.color || '#f0f0f0';
         document.getElementById('color-text').innerText = item.color || '#f0f0f0';
-      var ec = document.getElementById('edit-content'); if(ec) ec.innerHTML = item.content || '';
       }
+      var ec = document.getElementById('edit-content'); if(ec) ec.innerHTML = item.content || '';
     }
   }
   var gc2 = document.getElementById('group-content');
-  if(gc2) gc2.style.display = (type === 'notice') ? 'block' : 'none';
+  if(gc2) gc2.style.display = (type === 'notice' || type === 'tool') ? 'block' : 'none';
   document.getElementById('edit-modal').classList.add('show');
 }
 
