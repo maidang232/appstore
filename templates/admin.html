@@ -479,7 +479,7 @@ function openModal(type, index = -1) {
     let item = type === 'banner' ? tempData.banners[index] : type === 'notice' ? tempData.notices[index] : tempData.toolsTabs[currentToolTabIndex].cards[index];
     if (item) {
       document.getElementById('edit-title').value = item.title || '';
-      document.getElementById('edit-desc').value = item.desc || item.sub || '';
+      document.getElementById('edit-desc').value = ((item.desc||'')+'').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
       document.getElementById('edit-link').value = item.link || '';
       document.getElementById('edit-icon').value = item.icon || '';
       document.getElementById('edit-image-url').value = item.bg || item.image || '';
@@ -546,7 +546,8 @@ function renderList(type) {
   let items = type === 'banner' ? tempData.banners : tempData.notices;
   document.getElementById(listEl).innerHTML = items.map((item, index) => {
     const bgStyle = item.bg ? `background-image:url(${item.bg});background-position:${item.position||'center'};` : `background:${item.color||'#f0f0f0'};`;
-    return `<div class="item-card"><div class="item-thumb" style="${bgStyle}"></div><div class="item-info"><h4>${item.title}</h4><p>${item.desc || item.sub || ''}</p></div><div class="item-actions"><button class="btn-edit" onclick="openModal('${type}', ${index})">编辑</button><button class="btn-del" onclick="deleteItem('${type}', ${index})">删除</button></div></div>`;
+    const __desc = ((item.desc||'')+'').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+    return `<div class="item-card"><div class="item-thumb" style="${bgStyle}"></div><div class="item-info"><h4>${item.title}</h4><p>${__desc}</p></div><div class="item-actions"><button class="btn-edit" onclick="openModal('${type}', ${index})">编辑</button><button class="btn-del" onclick="deleteItem('${type}', ${index})">删除</button></div></div>`;
   }).join('');
 }
 
@@ -699,7 +700,7 @@ async function loadConfig() {
   document.getElementById('my-page-title').value = config.my_title || '';
   document.getElementById('my-page-subtitle').value = config.my_subtitle || '';
   if (config.home_banners) tempData.banners = config.home_banners.map(b => ({ title: b.title||'', desc: b.desc||'', link: b.link||'', bg: b.image||b.bg||'', position: b.position||'center', color: b.color||'#f0f0f0' }));
-  if (config.notice_cards) tempData.notices = config.notice_cards.map(c => ({ title: c.title||'', desc: c.content || c.desc || '', bg: c.bg||c.image||'', position: c.position||'center', color: c.color||'#f0f0f0' }));
+  if (config.notice_cards) tempData.notices = config.notice_cards.map(c => ({ title: c.title||'', desc: c.desc || '', content: c.content || '', bg: c.bg||c.image||'', position: c.position||'center', color: c.color||'#f0f0f0' }));
   if (config.software_tabs) tempData.softwareTabs = config.software_tabs.split(',').map(s=>s.trim()).filter(s=>s);
   fillCategoryOptions();
   if (config.tools_tabs) {
