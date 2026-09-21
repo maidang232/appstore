@@ -85,7 +85,7 @@ body{background:var(--bg);color:var(--text);padding-bottom:60px;overflow-x:hidde
 .modal-header{display:flex;justify-content:space-between;margin-bottom:14px;align-items:center}
 .modal-title{color:var(--text);font-weight:800;font-size:18px}
 .modal-close{cursor:pointer;color:var(--text-sub);font-size:20px;line-height:1;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--border)}
-.modal-body{font-size:14px;color:var(--text-sub);line-height:1.8;white-space:pre-wrap}
+.modal-body{word-break:break-word;font-size:14px;color:var(--text-sub);line-height:1.8;white-space:pre-wrap}
 .auth-form{display:flex;flex-direction:column;gap:10px;margin-top:8px}
 .auth-form input{padding:12px;border:1.5px solid var(--border-2);border-radius:10px;font-size:14px;outline:none;background:var(--bg);color:var(--text);width:100%}
 .auth-form input:focus{border-color:var(--primary)}
@@ -502,8 +502,20 @@ function openNotice(i){
   const c = config.notice_cards && config.notice_cards[i];
   if(!c) return;
   const title = (c.title||'').replace(/\n/g, ' ');
-  const content = c.content || c.desc || '暂无内容';
-  showInfo(title, content);
+  const desc = c.desc || '';
+  const content = c.content || '';
+  document.getElementById('modal-title').innerText = title;
+  var html = '';
+  if(desc){
+    html += '<div style="font-size:13px;color:var(--text-sub);line-height:1.7;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--border)">' + escapeHtml(desc) + '</div>';
+  }
+  if(content){
+    html += '<div style="font-size:14px;color:var(--text);line-height:1.8">' + content + '</div>';
+  } else if(!desc){
+    html += '<div style="font-size:14px;color:var(--text-sub);text-align:center;padding:20px 0">暂无详情</div>';
+  }
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal').classList.add('show');
 }
 function renderToolsContent(tabs){
   const activeTab=tabs.find(t=>t.name===currentToolsTab);

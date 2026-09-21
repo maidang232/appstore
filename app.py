@@ -85,6 +85,38 @@ def is_admin():
 
 ADMIN_LOGIN_HTML = """<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>后台登录</title><style>*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,sans-serif}body{background:linear-gradient(135deg,#1a1d23 0%,#2d3340 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}.box{background:#fff;border-radius:20px;padding:32px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)}.box h1{font-size:22px;font-weight:800;color:#1a1d23;margin-bottom:6px;text-align:center}.box p{font-size:13px;color:#999;text-align:center;margin-bottom:24px}.box input{width:100%;padding:14px 16px;border:1.5px solid #e8eaf0;border-radius:12px;font-size:15px;outline:none;background:#fafbfd;margin-bottom:14px}.box input:focus{border-color:#1a1d23}.box button{width:100%;padding:14px;background:#1a1d23;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}.err{color:#ff4757;font-size:13px;text-align:center;margin-bottom:10px;display:none}.err.show{display:block}</style></head><body><div class="box"><h1>后台登录</h1><p>请输入管理密码</p><div class="err" id="err">密码错误</div><input type="password" id="pwd" placeholder="管理密码" onkeydown="if(event.key==='Enter')doLogin()"><button onclick="doLogin()">登录</button></div><script>async function doLogin(){const pwd=document.getElementById('pwd').value;if(!pwd){showErr('请输入密码');return}const res=await fetch('/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});if(res.ok){window.location.href='/admin'}else{showErr('密码错误')}}function showErr(m){const e=document.getElementById('err');e.innerText=m;e.classList.add('show')}</script></body></html>"""
 
+
+@app.route('/api/admin/uploads')
+def api_admin_uploads():
+    if not is_admin(): return jsonify({'error':'unauthorized'}), 401
+    files = []
+    if os.path.exists(UPLOAD_DIR):
+        for fn in sorted(os.listdir(UPLOAD_DIR), reverse=True):
+            full = os.path.join(UPLOAD_DIR, fn)
+            if os.path.isfile(full):
+                files.append({
+                    'name': fn,
+                    'url': '/static/uploads/' + fn,
+                    'size': os.path.getsize(full),
+                    'time': os.path.getmtime(full)
+                })
+    return jsonify(files)
+
+@app.route('/api/admin/delete-upload', methods=['POST'])
+def api_admin_delete_upload():
+    if not is_admin(): return jsonify({'error':'unauthorized'}), 401
+    d = request.get_json() or {}
+    fn = (d.get('name') or '').strip()
+    if not fn or '/' in fn or '..' in fn:
+        return jsonify({'error':'invalid name'}), 400
+    full = os.path.join(UPLOAD_DIR, fn)
+    if not os.path.abspath(full).startswith(os.path.abspath(UPLOAD_DIR)):
+        return jsonify({'error':'invalid path'}), 400
+    if os.path.isfile(full):
+        os.remove(full)
+        return jsonify({'ok': True})
+    return jsonify({'error':'not found'}), 404
+
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'GET':

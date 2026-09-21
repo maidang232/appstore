@@ -206,7 +206,12 @@ textarea{resize:vertical;min-height:80px}
     <input type="range" id="banner-speed" min="0.5" max="10" step="0.5" value="1.5" style="width:100%" oninput="document.getElementById('banner-speed-val').innerText=this.value">
     <button class="btn btn-primary" onclick="saveSpeed()" style="margin-top:10px">保存速度</button>
   </div>
-  <div class="section">
+  <div class="section" id="upload-manager">
+    <h2>已上传的图片</h2>
+    <div class="hint">服务器上 static/uploads 里的所有文件。点击缩略图可查看，点"删除"清理。</div>
+    <div id="upload-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:8px"></div>
+  </div>
+<div class="section">
     <h2>退出登录</h2>
     <div class="hint">退出后需要重新输入密码才能进入后台。</div>
     <button class="btn" style="background:#ff4757;color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;cursor:pointer;border:none" onclick="location.href='/admin/logout'">退出登录</button>
@@ -218,7 +223,23 @@ textarea{resize:vertical;min-height:80px}
     <div class="form-group" id="group-title"><label>标题</label><input id="edit-title" placeholder="输入标题"></div>
     <div class="form-group" id="group-desc"><label>简介 / 副标题</label><input id="edit-desc" placeholder="输入副标题"></div>
     <div class="form-group" id="group-link"><label>跳转链接 (可选)</label><input id="edit-link" placeholder="点击跳转到哪个网址"></div>
-    <div class="form-group" id="group-icon"><label>图标 Emoji</label><input id="edit-icon" placeholder="输入一个 Emoji">
+    <div class="form-group" id="group-content" style="display:none">
+      <label>详情内容（支持图文排版）</label>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
+        <button type="button" onclick="fmt('bold')" style="padding:6px 10px;font-weight:bold;background:#f0f1f5;border:1px solid #ddd;border-radius:6px;cursor:pointer">B</button>
+        <button type="button" onclick="fmt('italic')" style="padding:6px 10px;font-style:italic;background:#f0f1f5;border:1px solid #ddd;border-radius:6px;cursor:pointer">I</button>
+        <button type="button" onclick="fmt('underline')" style="padding:6px 10px;text-decoration:underline;background:#f0f1f5;border:1px solid #ddd;border-radius:6px;cursor:pointer">U</button>
+        <button type="button" onclick="fmt('justifyLeft')" style="padding:6px 10px;background:#f0f1f5;border:1px solid #ddd;border-radius:6px;cursor:pointer">左</button>
+        <button type="button" onclick="fmt('justifyCenter')" style="padding:6px 10px;background:#f0f1f5;border:1px solid #ddd;border-radius:6px;cursor:pointer">中</button>
+        <button type="button" onclick="fmt('justifyRight')" style="padding:6px 10px;background:#f0f1f5;border:1px solid #ddd;border-radius:6px;cursor:pointer">右</button>
+        <button type="button" onclick="fmt('formatBlock','h3')" style="padding:6px 10px;background:#f0f1f5;border:1px solid #ddd;border-radius:6px;cursor:pointer">标题</button>
+        <button type="button" onclick="fmt('insertUnorderedList')" style="padding:6px 10px;background:#f0f1f5;border:1px solid #ddd;border-radius:6px;cursor:pointer">• 列表</button>
+        <button type="button" class="btn-add" onclick="saveEditRange();document.getElementById('content-img-input').click()">📷 插图</button>
+        <input type="file" id="content-img-input" accept="image/*" style="display:none" onchange="uploadContentImage()">
+      </div>
+      <div id="edit-content" contenteditable="true" style="min-height:150px;max-height:400px;overflow-y:auto;padding:12px;border:1.5px solid #e8eaf0;border-radius:8px;background:#fafbfd;font-size:14px;line-height:1.7;outline:none"></div>
+    </div>
+<div class="form-group" id="group-icon"><label>图标 Emoji</label><input id="edit-icon" placeholder="输入一个 Emoji">
 <input type="file" id="edit-icon-file" accept="image/*" style="display:none" onchange="uploadIcon()">
 <button type="button" class="btn-add" style="margin-top:6px" onclick="document.getElementById('edit-icon-file').click()">📷 上传图标（1:1 PNG）</button>
 <div id="edit-icon-preview" style="width:60px;height:60px;background-size:contain;background-repeat:no-repeat;background-position:center;border-radius:8px;margin-top:8px;background-color:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px">未设置</div>
@@ -256,6 +277,7 @@ function switchTab(id, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   el.classList.add('active');
+  if(id === 'tab-settings' && typeof loadUploads === 'function') loadUploads();
 }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
@@ -341,10 +363,102 @@ function fillCategoryOptions(){
   if(b) b.innerHTML = opts;
 }
 
+
+async function uploadContentImage(){
+  var fi = document.getElementById('content-img-input');
+  var f = fi.files[0];
+  if(!f) return;
+  var fd = new FormData();
+  fd.append('file', f);
+  var res = await fetch('/api/upload', {method:'POST', headers:{'X-Admin-Token':'admin123'}, body:fd});
+  var data = await res.json();
+  if(!data.url){ alert('上传失败'); return; }
+  var el = document.getElementById('edit-content');
+  if(!el){ alert('找不到编辑器'); return; }
+  var tag = '<img src="' + data.url + '" style="max-width:100%;border-radius:8px;margin:8px 0;display:block">';
+  var inserted = false;
+  try{
+    el.focus();
+    if(__savedRange){
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(__savedRange);
+    }
+    inserted = document.execCommand('insertHTML', false, tag);
+  }catch(e){ inserted = false; }
+  if(!inserted || el.innerHTML.indexOf(data.url) === -1){
+    el.innerHTML += tag;
+  }
+  fi.value = '';
+  __savedRange = null;
+}
+
+
+function fmt(cmd, val){
+  var el = document.getElementById('edit-content');
+  if(el) el.focus();
+  document.execCommand(cmd, false, val || null);
+}
+
+
+async function loadUploads(){
+  var list = document.getElementById('upload-list');
+  if(!list) return;
+  try{
+    var files = await fetch('/api/admin/uploads', {headers:{'X-Admin-Token':'admin123'}}).then(r=>r.json());
+    if(!Array.isArray(files) || files.length === 0){
+      list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;font-size:13px">还没有上传过图片</div>';
+      return;
+    }
+    list.innerHTML = files.map(function(f){
+      var kb = (f.size/1024).toFixed(1);
+      return '<div style="background:#fafbfd;border:1px solid #eef1f6;border-radius:8px;padding:6px;text-align:center">' +
+        '<img src="' + f.url + '" style="width:100%;height:70px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="window.open(\'' + f.url + '\',\'_blank\')">' +
+        '<div style="font-size:10px;color:#999;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + kb + ' KB</div>' +
+        '<button onclick="deleteUpload(\'' + f.name + '\')" style="margin-top:4px;width:100%;padding:4px;background:#ff4757;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer">删除</button>' +
+        '</div>';
+    }).join('');
+  }catch(e){ list.innerHTML = '<div style="color:#999;text-align:center;padding:20px">加载失败</div>'; }
+}
+
+async function deleteUpload(name){
+  if(!confirm('确定删除这张图片？删除后所有引用它的地方会变成空白。')) return;
+  var res = await fetch('/api/admin/delete-upload', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Admin-Token':'admin123'},
+    body: JSON.stringify({name: name})
+  });
+  if(res.ok){ loadUploads(); }
+  else { alert('删除失败'); }
+}
+
+
+var __savedRange = null;
+function saveEditRange(){
+  var sel = window.getSelection();
+  if(sel && sel.rangeCount > 0){
+    var r = sel.getRangeAt(0);
+    var el = document.getElementById('edit-content');
+    if(el && el.contains(r.commonAncestorContainer)){
+      __savedRange = r.cloneRange();
+    }
+  }
+}
+function restoreEditRange(){
+  if(!__savedRange) return;
+  var el = document.getElementById('edit-content');
+  el.focus();
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(__savedRange);
+}
+
 function openModal(type, index = -1) {
   editType = type; editIndex = index;
   document.getElementById('modal-title').innerText = (index === -1 ? '添加' : '编辑') + (type === 'banner' ? '轮播图' : type === 'notice' ? '公告卡片' : '工具卡片');
   document.getElementById('edit-title').value = '';
+  var ec0 = document.getElementById('edit-content'); if(ec0) ec0.innerHTML = '';
+  __savedRange = null;
   document.getElementById('edit-desc').value = '';
   document.getElementById('edit-link').value = '';
   document.getElementById('edit-icon').value = '';
@@ -382,9 +496,12 @@ function openModal(type, index = -1) {
         if(ect2) ect2.checked = false;
         document.getElementById('edit-color').value = item.color || '#f0f0f0';
         document.getElementById('color-text').innerText = item.color || '#f0f0f0';
+      var ec = document.getElementById('edit-content'); if(ec) ec.innerHTML = item.content || '';
       }
     }
   }
+  var gc2 = document.getElementById('group-content');
+  if(gc2) gc2.style.display = (type === 'notice') ? 'block' : 'none';
   document.getElementById('edit-modal').classList.add('show');
 }
 
@@ -400,7 +517,8 @@ function saveItem() {
     position: document.getElementById('edit-position').value,
     color: document.getElementById('edit-color-transparent').checked ? 'transparent' : document.getElementById('edit-color').value,
     icon_url: document.getElementById('edit-icon-url').value,
-    bg_fit: document.getElementById('edit-bg-fit') ? document.getElementById('edit-bg-fit').value : 'contain'
+    bg_fit: document.getElementById('edit-bg-fit') ? document.getElementById('edit-bg-fit').value : 'contain',
+    content: (document.getElementById('edit-content') ? document.getElementById('edit-content').innerHTML : '')
   };
   if (editType === 'banner') { if (editIndex > -1) tempData.banners[editIndex] = newItem; else tempData.banners.push(newItem); renderList('banner'); }
   else if (editType === 'notice') { if (editIndex > -1) tempData.notices[editIndex] = newItem; else tempData.notices.push(newItem); renderList('notice'); }
@@ -495,7 +613,7 @@ function renderToolCards() {
 
 async function saveAll(configKey, type) {
   let items = type === 'banner' ? tempData.banners : tempData.notices;
-  const formatted = items.map(item => ({ title: item.title, desc: item.desc || '', sub: item.desc || '', content: item.desc || '', link: item.link || '', icon: item.icon || '', bg: item.bg || '', image: item.bg || '', position: item.position || 'center', color: item.color || '#f0f0f0', icon_url: item.icon_url || '', bg_fit: item.bg_fit || 'contain' }));
+  const formatted = items.map(item => ({ title: item.title, desc: item.desc || '', sub: item.desc || '', content: item.content || item.desc || '', link: item.link || '', icon: item.icon || '', bg: item.bg || '', image: item.bg || '', position: item.position || 'center', color: item.color || '#f0f0f0', icon_url: item.icon_url || '', bg_fit: item.bg_fit || 'contain' }));
   await fetch('/api/config', { method:'POST', headers:H, body:JSON.stringify({ [configKey]: formatted })});
   alert('保存成功！');
 }
