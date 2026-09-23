@@ -52,6 +52,16 @@ def init_admin_pwd():
                 db.commit()
     except: pass
 
+
+_captchas = {}
+
+def _clean_captchas():
+    import time
+    now = time.time()
+    for k in list(_captchas.keys()):
+        if _captchas[k].get('exp', 0) < now:
+            _captchas.pop(k, None)
+
 def init_db():
     with sqlite3.connect(DB) as db:
         db.execute('''CREATE TABLE IF NOT EXISTS apps(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT,description TEXT DEFAULT '',icon_url TEXT DEFAULT '',download_url TEXT DEFAULT '',category TEXT DEFAULT '工具',downloads INTEGER DEFAULT 0,featured INTEGER DEFAULT 0,created_at TEXT)''')
@@ -282,6 +292,193 @@ def api_user_stats():
     db.commit()
     return jsonify({'ok': True})
 
+
+
+# ============ 广场留言 API ============
+@app.route('/api/captcha')
+def api_captcha():
+    import random, time
+    x = random.randint(1, 20)
+    y = random.randint(1, 20)
+    if random.random() < 0.5:
+        q = str(x) + ' + ' + str(y)
+        ans = x + y
+    else:
+        if x < y:
+            x, y = y, x
+        q = str(x) + ' - ' + str(y)
+        ans = x - y
+    cid = uuid.uuid4().hex
+    exp = time.time() + 300
+    with sqlite3.connect(DB) as db:
+        db.execute("CREATE TABLE IF NOT EXISTS captchas(id TEXT PRIMARY KEY, ans TEXT, exp REAL)")
+        db.execute("DELETE FROM captchas WHERE exp < ?", (time.time(),))
+        db.execute("INSERT INTO captchas(id, ans, exp) VALUES(?,?,?)", (cid, str(ans), exp))
+        db.commit()
+    return jsonify({'id': cid, 'question': q})
+
+@app.route('/api/messages', methods=['GET'])
+def api_messages_list():
+    with sqlite3.connect(DB) as db:
+        rows = db.execute("SELECT id, user_id, username, content, created_at, updated_at, IFNULL(pinned,0) FROM messages ORDER BY IFNULL(pinned,0) DESC, id DESC LIMIT 200").fetchall()
+    return jsonify([{'id': r[0], 'user_id': r[1], 'username': r[2], 'content': r[3], 'created_at': r[4], 'updated_at': r[5], 'pinned': r[6]} for r in rows])
+
+@app.route('/api/messages', methods=['POST'])
+def api_messages_create():
+    token = request.headers.get('X-User-Token') or request.args.get('token')
+    if not token:
+        return jsonify({'error': '请先登录'}), 401
+    with sqlite3.connect(DB) as db:
+        user = db.execute("SELECT id, username FROM users WHERE token=?", (token,)).fetchone()
+        if not user:
+            return jsonify({'error': '登录已失效'}), 401
+        data = request.get_json(silent=True) or {}
+        content = (data.get('content') or '').strip()
+        if not content:
+            return jsonify({'error': '内容不能为空'}), 400
+        if len(content) > 500:
+            return jsonify({'error': '内容最长 500 字'}), 400
+        cid = data.get('captcha_id') or ''
+        cans = data.get('captcha_answer')
+        import time
+        cap = db.execute("SELECT ans, exp FROM captchas WHERE id=?", (cid,)).fetchone()
+        if cap:
+            db.execute("DELETE FROM captchas WHERE id=?", (cid,))
+        if (not cap) or cap[1] < time.time() or str(cap[0]) != str(cans).strip():
+            return jsonify({'error': '验证码错误'}), 400
+        cnt = db.execute("SELECT COUNT(*) FROM messages WHERE user_id=? AND date(created_at)=date('now','localtime')", (user[0],)).fetchone()[0]
+        if cnt >= 5:
+            return jsonify({'error': '今天已发满 5 条，明天再来'}), 429
+        now = datetime.datetime.now().isoformat()
+        db.execute("INSERT INTO messages(user_id, username, content, created_at, updated_at) VALUES(?,?,?,?,?)", (user[0], user[1], content, now, now))
+        db.commit()
+        mid = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    return jsonify({'ok': True, 'id': mid})
+
+@app.route('/api/messages/<int:mid>', methods=['PUT'])
+def api_messages_edit(mid):
+    token = request.headers.get('X-User-Token') or request.args.get('token')
+    if not token:
+        return jsonify({'error': '请先登录'}), 401
+    with sqlite3.connect(DB) as db:
+        user = db.execute("SELECT id FROM users WHERE token=?", (token,)).fetchone()
+        if not user:
+            return jsonify({'error': '登录已失效'}), 401
+        row = db.execute("SELECT user_id FROM messages WHERE id=?", (mid,)).fetchone()
+        if not row:
+            return jsonify({'error': '留言不存在'}), 404
+        if row[0] != user[0]:
+            return jsonify({'error': '只能编辑自己的留言'}), 403
+        data = request.get_json(silent=True) or {}
+        content = (data.get('content') or '').strip()
+        if not content:
+            return jsonify({'error': '内容不能为空'}), 400
+        if len(content) > 500:
+            return jsonify({'error': '内容最长 500 字'}), 400
+        now = datetime.datetime.now().isoformat()
+        db.execute("UPDATE messages SET content=?, updated_at=? WHERE id=?", (content, now, mid))
+        db.commit()
+    return jsonify({'ok': True})
+
+@app.route('/api/messages/<int:mid>', methods=['DELETE'])
+def api_messages_delete(mid):
+    token = request.headers.get('X-User-Token') or request.args.get('token')
+    if not token:
+        return jsonify({'error': '请先登录'}), 401
+    with sqlite3.connect(DB) as db:
+        user = db.execute("SELECT id FROM users WHERE token=?", (token,)).fetchone()
+        if not user:
+            return jsonify({'error': '登录已失效'}), 401
+        row = db.execute("SELECT user_id FROM messages WHERE id=?", (mid,)).fetchone()
+        if not row:
+            return jsonify({'error': '留言不存在'}), 404
+        if row[0] != user[0]:
+            return jsonify({'error': '只能删除自己的留言'}), 403
+        db.execute("DELETE FROM messages WHERE id=?", (mid,))
+        db.commit()
+    return jsonify({'ok': True})
+
+# ============ 广场管理（后台） ============
+@app.route('/api/admin/messages', methods=['GET'])
+def api_admin_messages():
+    tok = request.headers.get('X-Admin-Token') or request.args.get('token')
+    if tok != get_admin_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    with sqlite3.connect(DB) as db:
+        rows = db.execute("SELECT id, user_id, username, content, created_at, updated_at, IFNULL(pinned,0) FROM messages ORDER BY IFNULL(pinned,0) DESC, id DESC LIMIT 500").fetchall()
+    return jsonify([{'id': r[0], 'user_id': r[1], 'username': r[2], 'content': r[3], 'created_at': r[4], 'updated_at': r[5], 'pinned': r[6]} for r in rows])
+
+@app.route('/api/admin/messages/<int:mid>', methods=['PUT'])
+def api_admin_message_edit(mid):
+    tok = request.headers.get('X-Admin-Token') or request.args.get('token')
+    if tok != get_admin_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    data = request.get_json(silent=True) or {}
+    content = (data.get('content') or '').strip()
+    if not content:
+        return jsonify({'error': '内容不能为空'}), 400
+    if len(content) > 500:
+        return jsonify({'error': '内容最长 500 字'}), 400
+    now = datetime.datetime.now().isoformat()
+    with sqlite3.connect(DB) as db:
+        if not db.execute("SELECT id FROM messages WHERE id=?", (mid,)).fetchone():
+            return jsonify({'error': '留言不存在'}), 404
+        db.execute("UPDATE messages SET content=?, updated_at=? WHERE id=?", (content, now, mid))
+        db.commit()
+    return jsonify({'ok': True})
+
+@app.route('/api/admin/messages/<int:mid>', methods=['DELETE'])
+def api_admin_message_delete(mid):
+    tok = request.headers.get('X-Admin-Token') or request.args.get('token')
+    if tok != get_admin_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    with sqlite3.connect(DB) as db:
+        if not db.execute("SELECT id FROM messages WHERE id=?", (mid,)).fetchone():
+            return jsonify({'error': '留言不存在'}), 404
+        db.execute("DELETE FROM messages WHERE id=?", (mid,))
+        db.commit()
+    return jsonify({'ok': True})
+
+@app.route('/api/admin/messages/post', methods=['POST'])
+def api_admin_message_post():
+    tok = request.headers.get('X-Admin-Token') or request.args.get('token')
+    if tok != get_admin_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    data = request.get_json(silent=True) or {}
+    content = (data.get('content') or '').strip()
+    if not content:
+        return jsonify({'error': '内容不能为空'}), 400
+    if len(content) > 500:
+        return jsonify({'error': '内容最长 500 字'}), 400
+    now = datetime.datetime.now().isoformat()
+    with sqlite3.connect(DB) as db:
+        db.execute("INSERT INTO messages(user_id, username, content, created_at, updated_at, pinned) VALUES(?,?,?,?,?,0)", (0, '管理员', content, now, now))
+        db.commit()
+    return jsonify({'ok': True})
+
+@app.route('/api/admin/messages/<int:mid>/pin', methods=['POST'])
+def api_admin_message_pin(mid):
+    tok = request.headers.get('X-Admin-Token') or request.args.get('token')
+    if tok != get_admin_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    with sqlite3.connect(DB) as db:
+        if not db.execute("SELECT id FROM messages WHERE id=?", (mid,)).fetchone():
+            return jsonify({'error': '留言不存在'}), 404
+        db.execute("UPDATE messages SET pinned=1 WHERE id=?", (mid,))
+        db.commit()
+    return jsonify({'ok': True})
+
+@app.route('/api/admin/messages/<int:mid>/unpin', methods=['POST'])
+def api_admin_message_unpin(mid):
+    tok = request.headers.get('X-Admin-Token') or request.args.get('token')
+    if tok != get_admin_password():
+        return jsonify({'error': 'unauthorized'}), 401
+    with sqlite3.connect(DB) as db:
+        if not db.execute("SELECT id FROM messages WHERE id=?", (mid,)).fetchone():
+            return jsonify({'error': '留言不存在'}), 404
+        db.execute("UPDATE messages SET pinned=0 WHERE id=?", (mid,))
+        db.commit()
+    return jsonify({'ok': True})
 
 @app.route('/api/client-version')
 def api_client_version():

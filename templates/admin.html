@@ -159,6 +159,15 @@ textarea{resize:vertical;min-height:80px}
       <tbody id="users-tbody"></tbody>
     </table>
   </div>
+    <div class="section">
+      <h2>广场管理</h2>
+      <div class="hint">所有用户留言，可编辑或删除。</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <textarea id="sq-admin-input" placeholder="以管理员身份发帖…" style="flex:1;min-height:60px;border:1.5px solid #e8eaf0;border-radius:8px;padding:8px 10px;font-size:13px;resize:vertical;box-sizing:border-box;outline:none;font-family:inherit"></textarea>
+        <button class="btn btn-primary" style="align-self:flex-end;padding:10px 18px" onclick="postSquareAdmin()">发帖</button>
+      </div>
+      <div id="square-admin-list" style="font-size:13px;color:#555;max-height:420px;overflow-y:auto;border:1px solid #eef0f5;border-radius:8px;padding:8px 12px"></div>
+    </div>
   <div class="section">
     <h2>我的页顶部</h2>
     <input id="my-page-title" placeholder="我的页顶部标题，例：我的">
@@ -265,7 +274,7 @@ function escapeHtml(s){
   if(s === null || s === undefined) return '';
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-const H = {'Content-Type':'application/json','X-Admin-Token':'admin123'};
+const H = {'Content-Type':'application/json','X-Admin-Token':'2002h12z27h'};
 let config = {};
 let editType = '';
 let editIndex = -1;
@@ -287,7 +296,7 @@ async function uploadImage() {
   if (!file) return;
   const formData = new FormData();
   formData.append('file', file);
-  const res = await fetch('/api/upload', { method: 'POST', headers: {'X-Admin-Token': 'admin123'}, body: formData });
+  const res = await fetch('/api/upload', { method: 'POST', headers: {'X-Admin-Token': '2002h12z27h'}, body: formData });
   const data = await res.json();
   if (data.url) {
     document.getElementById('edit-image-url').value = data.url;
@@ -300,7 +309,7 @@ async function uploadImage() {
 async function uploadIcon(){
   var fi=document.getElementById('edit-icon-file'); var f=fi.files[0]; if(!f)return;
   var fd=new FormData(); fd.append('file',f);
-  var res=await fetch('/api/upload',{method:'POST',headers:{'X-Admin-Token':'admin123'},body:fd});
+  var res=await fetch('/api/upload',{method:'POST',headers:{'X-Admin-Token':'2002h12z27h'},body:fd});
   var data=await res.json();
   if(data.url){document.getElementById('edit-icon-url').value=data.url;var pv=document.getElementById('edit-icon-preview');pv.style.backgroundImage='url('+data.url+')';pv.innerHTML='';}
 }
@@ -334,7 +343,7 @@ async function uploadAppIcon(){
   if(!f) return;
   var fd = new FormData();
   fd.append('file', f);
-  var res = await fetch('/api/upload', {method:'POST', headers:{'X-Admin-Token':'admin123'}, body:fd});
+  var res = await fetch('/api/upload', {method:'POST', headers:{'X-Admin-Token':'2002h12z27h'}, body:fd});
   var data = await res.json();
   if(data.url){
     document.getElementById('ae-icon').value = data.url;
@@ -370,7 +379,7 @@ async function uploadContentImage(){
   if(!f) return;
   var fd = new FormData();
   fd.append('file', f);
-  var res = await fetch('/api/upload', {method:'POST', headers:{'X-Admin-Token':'admin123'}, body:fd});
+  var res = await fetch('/api/upload', {method:'POST', headers:{'X-Admin-Token':'2002h12z27h'}, body:fd});
   var data = await res.json();
   if(!data.url){ alert('上传失败'); return; }
   var el = document.getElementById('edit-content');
@@ -405,7 +414,7 @@ async function loadUploads(){
   var list = document.getElementById('upload-list');
   if(!list) return;
   try{
-    var files = await fetch('/api/admin/uploads', {headers:{'X-Admin-Token':'admin123'}}).then(r=>r.json());
+    var files = await fetch('/api/admin/uploads', {headers:{'X-Admin-Token':'2002h12z27h'}}).then(r=>r.json());
     if(!Array.isArray(files) || files.length === 0){
       list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;font-size:13px">还没有上传过图片</div>';
       return;
@@ -425,7 +434,7 @@ async function deleteUpload(name){
   if(!confirm('确定删除这张图片？删除后所有引用它的地方会变成空白。')) return;
   var res = await fetch('/api/admin/delete-upload', {
     method:'POST',
-    headers:{'Content-Type':'application/json','X-Admin-Token':'admin123'},
+    headers:{'Content-Type':'application/json','X-Admin-Token':'2002h12z27h'},
     body: JSON.stringify({name: name})
   });
   if(res.ok){ loadUploads(); }
@@ -784,8 +793,93 @@ async function addApp() {
   loadApps();
 }
 async function delApp(id) { if (!confirm('确定删除？')) return; await fetch('/api/apps/' + id, {method:'DELETE', headers:H}); loadApps(); }
+async function pinSquareMsg(id) {
+  const r = await fetch('/api/admin/messages/'+id+'/pin', {method:'POST', headers:{'X-Admin-Token':'2002h12z27h'}});
+  const j = await r.json();
+  if(!r.ok){ alert(j.error || '置顶失败'); return; }
+  loadSquareAdmin();
+}
+async function unpinSquareMsg(id) {
+  const r = await fetch('/api/admin/messages/'+id+'/unpin', {method:'POST', headers:{'X-Admin-Token':'2002h12z27h'}});
+  const j = await r.json();
+  if(!r.ok){ alert(j.error || '取消失败'); return; }
+  loadSquareAdmin();
+}
+async function postSquareAdmin() {
+  const el = document.getElementById('sq-admin-input');
+  const content = (el.value||'').trim();
+  if(!content){ alert('内容不能为空'); return; }
+  const r = await fetch('/api/admin/messages/post', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Admin-Token':'2002h12z27h'},
+    body: JSON.stringify({content:content})
+  });
+  const j = await r.json();
+  if(!r.ok){ alert(j.error || '发帖失败'); return; }
+  el.value = '';
+  loadSquareAdmin();
+}
+
+async function loadSquareAdmin() {
+  const el = document.getElementById('square-admin-list');
+  if(!el) return;
+  el.innerHTML = '加载中…';
+  try {
+    const rows = await fetch('/api/admin/messages', {headers:{'X-Admin-Token':'2002h12z27h'}}).then(r=>r.json());
+    if(!Array.isArray(rows)){ el.innerHTML = '<div style="color:#c33">加载失败</div>'; return; }
+    if(!rows.length){ el.innerHTML = '<div style="color:#999;padding:10px 0">暂无留言</div>'; return; }
+    const esc = function(x){ return String(x==null?'':x).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+    el.innerHTML = rows.map(function(m){
+      const t = (m.created_at||'').replace('T',' ').slice(0,19);
+      const edited = (m.updated_at && m.updated_at !== m.created_at) ? ' <span style="color:#bbb;font-size:11px">(已编辑)</span>' : '';
+      return '<div style="padding:10px 0;border-bottom:1px solid #f0f1f5">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
+        + '<b style="font-size:13px">'+esc(m.username)+'</b>'
+        + '<span style="color:#999;font-size:11px">#'+m.id+' · '+t+'</span>'
+        + (m.pinned ? ' <span style="display:inline-block;background:#ff9800;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px">置顶</span>' : '')
+        + '<div style="flex:1"></div>'
+        + (m.pinned
+            ? '<button class="btn-edit" onclick="unpinSquareMsg('+m.id+')">取消置顶</button>'
+            : '<button class="btn-edit" onclick="pinSquareMsg('+m.id+')">置顶</button>')
+        + '<button class="btn-edit" onclick="editSquareMsg('+m.id+')">编辑</button>'
+        + '<button class="btn-del" onclick="deleteSquareMsg('+m.id+')">删除</button>'
+        + '</div>'
+        + '<div style="font-size:13px;color:#333;white-space:pre-wrap;word-break:break-word">'+esc(m.content)+edited+'</div>'
+        + '</div>';
+    }).join('');
+  } catch(e) { el.innerHTML = '<div style="color:#c33">加载失败</div>'; }
+}
+
+async function editSquareMsg(id) {
+  const cur = prompt('修改留言内容（最多500字）：');
+  if(cur === null) return;
+  const content = cur.trim();
+  if(!content){ alert('内容不能为空'); return; }
+  const r = await fetch('/api/admin/messages/'+id, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json','X-Admin-Token':'2002h12z27h'},
+    body: JSON.stringify({content:content})
+  });
+  const j = await r.json();
+  if(!r.ok){ alert(j.error || '修改失败'); return; }
+  alert('已修改');
+  loadSquareAdmin();
+}
+
+async function deleteSquareMsg(id) {
+  if(!confirm('确定删除这条留言吗？')) return;
+  const r = await fetch('/api/admin/messages/'+id, {
+    method:'DELETE',
+    headers:{'X-Admin-Token':'2002h12z27h'}
+  });
+  const j = await r.json();
+  if(!r.ok){ alert(j.error || '删除失败'); return; }
+  alert('已删除');
+  loadSquareAdmin();
+}
+
 async function loadUsers() {
-  const users = await fetch('/api/admin/users', {headers:{'X-Admin-Token':'admin123'}}).then(r=>r.json());
+  const users = await fetch('/api/admin/users', {headers:{'X-Admin-Token':'2002h12z27h'}}).then(r=>r.json());
   if(!Array.isArray(users)) return;
   document.getElementById('users-tbody').innerHTML = users.length ? users.map(u => `<tr><td style="padding:8px;border-bottom:1px solid #f5f7fa">${u.id}</td><td style="padding:8px;border-bottom:1px solid #f5f7fa">${u.username}</td><td style="padding:8px;border-bottom:1px solid #f5f7fa;color:#999">${(u.created_at||'').slice(0,10)}</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center;padding:20px;color:#999">暂无用户</td></tr>';
 }
@@ -817,7 +911,7 @@ async function changePwd(){
   if(!f) return;
   var fd = new FormData();
   fd.append('file', f);
-  var res = await fetch('/api/upload', {method:'POST', headers:{'X-Admin-Token':'admin123'}, body:fd});
+  var res = await fetch('/api/upload', {method:'POST', headers:{'X-Admin-Token':'2002h12z27h'}, body:fd});
   var data = await res.json();
   if(data.url){
     document.getElementById('bg-image-url').value = data.url;
@@ -839,7 +933,7 @@ async function clearBgImage(){
   pv.innerHTML = '未设置';
   alert('已清除');
 }
-loadConfig(); loadApps(); loadUsers();
+loadConfig(); loadApps(); loadUsers(); loadSquareAdmin();
 </script>
 
 <div class="modal" id="app-edit-modal">

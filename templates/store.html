@@ -308,6 +308,10 @@ function switchTab(id,el){
   el.classList.add('active');
   if(id==='apps')loadApps();
   if(id==='my'){ checkLogin(); renderMyGrid(); }
+  if(id==='tools' && currentToolsTab==='__square__'){
+    var __sqb = document.getElementById('tools-content');
+    if(__sqb && typeof renderSquare === 'function') renderSquare(__sqb);
+  }
   window.scrollTo(0,0);
 }
 function showInfo(title, content){
@@ -489,7 +493,7 @@ async function loadConfig(){
     renderSoftTabs(tabs);
   }
   if(c.tools_tabs){
-    document.getElementById('tools-tabs').innerHTML=c.tools_tabs.map(t=>`<div class="soft-tab ${t.name===currentToolsTab?'active':''}" onclick="setToolTab(this.dataset.n)" data-n="${escapeHtml(t.name)}">${escapeHtml(t.name)}</div>`).join('');
+    document.getElementById('tools-tabs').innerHTML=_squareTabHtml()+c.tools_tabs.map(t=>`<div class="soft-tab ${t.name===currentToolsTab?'active':''}" onclick="setToolTab(this.dataset.n)" data-n="${escapeHtml(t.name)}">${escapeHtml(t.name)}</div>`).join('');
     if(!currentToolsTab && c.tools_tabs.length) currentToolsTab=c.tools_tabs[0].name;
     renderToolsContent(c.tools_tabs);
   }
@@ -520,8 +524,9 @@ function openNotice(i){
   document.getElementById('modal').classList.add('show');
 }
 function renderToolsContent(tabs){
-  const activeTab=tabs.find(t=>t.name===currentToolsTab);
   const box=document.getElementById('tools-content');
+  if(currentToolsTab==='__square__'){ renderSquare(box); return; }
+  const activeTab=tabs.find(t=>t.name===currentToolsTab);
   if(!activeTab){box.innerHTML='';return}
   const cards = activeTab.cards || [];
   if(cards.length === 0){ box.innerHTML='<div style="text-align:center;padding:50px 0;color:var(--text-light);font-size:14px">该标签暂无工具卡片</div>'; return; }
@@ -584,6 +589,213 @@ function showToolDetail(c){
 function closeToolDetail(){
   document.getElementById('tool-detail-modal').style.display = 'none';
 }
+
+// ============ 广场 ============
+var _capId = null;
+
+function _squareTabHtml(){
+  var active = currentToolsTab === '__square__' ? ' active' : '';
+  return '<div class="soft-tab' + active + '" onclick="setToolTab(\'__square__\')">广场</div>';
+}
+
+function _goLogin(){
+  var tabs = document.querySelectorAll('.tab-item');
+  for(var i=0;i<tabs.length;i++){
+    if(tabs[i].textContent.replace(/\s/g,'').indexOf('我的')>=0){
+      if(typeof switchTab === 'function'){ switchTab('my', tabs[i]); }
+      return;
+    }
+  }
+  if(typeof switchTab === 'function'){ switchTab('my', null); }
+}
+
+async function renderSquare(box){
+  // 先同步一次登录状态，避免切页后状态没刷新
+  var _tk = (typeof getUserToken === 'function') ? getUserToken() : '';
+  if(_tk){
+    try{
+      var _r = await fetch('/api/me', {headers:{'X-User-Token': _tk}});
+      currentUser = _r.ok ? await _r.json() : null;
+    }catch(e){ currentUser = null; }
+  } else {
+    currentUser = null;
+  }
+  var logged = !!currentUser;
+  var compose = logged
+    ? '<textarea id="sq-input" placeholder="说点什么吧…" maxlength="500" style="width:100%;min-height:70px;border:1px solid #e8eaf0;border-radius:10px;padding:10px;font-size:14px;resize:vertical;box-sizing:border-box;outline:none;font-family:inherit"></textarea>'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">'
+      + '<span style="font-size:14px;color:#666">验证码：</span>'
+      + '<span id="sq-cap-q" style="font-weight:700;font-size:15px;letter-spacing:1px">…</span>'
+      + '<span style="font-size:14px;color:#666">=</span>'
+      + '<input id="sq-cap-a" type="number" inputmode="numeric" style="width:70px;padding:6px 8px;border:1px solid #e8eaf0;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box" placeholder="?">'
+      + '<button type="button" onclick="_refreshCaptcha()" style="border:none;background:transparent;cursor:pointer;font-size:16px">🔄</button>'
+      + '<div style="flex:1"></div>'
+      + '<button onclick="_sendSquare()" style="padding:9px 20px;border:none;border-radius:10px;background:var(--primary,#7CB342);color:#fff;font-size:14px;font-weight:600;cursor:pointer">发送</button>'
+      + '</div>'
+    : '<div style="text-align:center;padding:16px 0;color:#888;font-size:14px">'
+      + '<div style="margin-bottom:10px">登录后即可留言</div>'
+      + '<button onclick="_goLogin()" style="padding:9px 22px;border:none;border-radius:10px;background:var(--primary,#7CB342);color:#fff;font-size:14px;font-weight:600;cursor:pointer">去登录</button>'
+      + '</div>';
+  box.innerHTML =
+    '<div style="max-width:720px;margin:0 auto;padding:12px">'
+    + '<div style="background:var(--card-bg,#fff);border-radius:14px;padding:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);margin-bottom:14px">' + compose + '</div>'
+    + '<div id="sq-list" style="background:var(--card-bg,#fff);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden"></div>'
+    + '</div>';
+  if(logged) _refreshCaptcha();
+  _loadSquareMessages();
+}
+
+async function _refreshCaptcha(){
+  try{
+    var r = await fetch('/api/captcha').then(function(x){return x.json();});
+    _capId = r.id;
+    var q = document.getElementById('sq-cap-q');
+    if(q) q.textContent = r.question;
+    var a = document.getElementById('sq-cap-a');
+    if(a) a.value = '';
+  }catch(e){}
+}
+
+async function _loadSquareMessages(){
+  var listEl = document.getElementById('sq-list');
+  if(!listEl) return;
+  listEl.innerHTML = '<div style="text-align:center;padding:30px 0;color:#aaa;font-size:13px">加载中…</div>';
+  try{
+    var arr = await fetch('/api/messages').then(function(x){return x.json();});
+    if(!arr.length){ listEl.innerHTML = '<div style="text-align:center;padding:44px 0;color:#aaa;font-size:13px">还没有留言，来抢沙发~</div>'; return; }
+    var myName = currentUser ? currentUser.username : null;
+    listEl.innerHTML = arr.map(function(m){
+      var mine = myName && m.username === myName;
+      var edited = (m.updated_at && m.updated_at !== m.created_at) ? ' <span style="color:#bbb;font-size:11px">(已编辑)</span>' : '';
+      var pinBadge = m.pinned ? ' <span style="display:inline-block;background:#ff9800;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle">置顶</span>' : '';
+      var t = _sqFmtTime(m.created_at);
+      var initial = escapeHtml((m.username||'?').charAt(0).toUpperCase());
+      return '<div style="padding:14px 16px;border-bottom:1px solid rgba(0,0,0,.05)">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+        + '<div style="width:28px;height:28px;border-radius:50%;background:var(--primary,#7CB342);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">'+initial+'</div>'
+        + '<div style="font-size:13px;font-weight:600">'+escapeHtml(m.username)+pinBadge+'</div>'
+        + '<div style="font-size:11px;color:#bbb">'+t+'</div>'
+        + (mine ? '<div style="flex:1"></div><button onclick="_editMsg('+m.id+')" style="border:none;background:transparent;color:#5c9b32;font-size:12px;cursor:pointer;padding:4px 6px">编辑</button><button onclick="_delMsg('+m.id+')" style="border:none;background:transparent;color:#e57373;font-size:12px;cursor:pointer;padding:4px 6px">删除</button>' : '')
+        + '</div>'
+        + '<div style="font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:var(--text,#333)">'+escapeHtml(m.content)+edited+'</div>'
+        + '</div>';
+    }).join('');
+  }catch(e){
+    listEl.innerHTML = '<div style="text-align:center;padding:30px 0;color:#e57373;font-size:13px">加载失败</div>';
+  }
+}
+
+function _sqFmtTime(s){
+  if(!s) return '';
+  try{
+    var d = new Date(s);
+    var diff = (Date.now() - d.getTime())/1000;
+    if(diff < 60) return '刚刚';
+    if(diff < 3600) return Math.floor(diff/60)+'分钟前';
+    if(diff < 86400) return Math.floor(diff/3600)+'小时前';
+    if(diff < 604800) return Math.floor(diff/86400)+'天前';
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }catch(e){ return (s||'').substring(0,10); }
+}
+
+async function _sendSquare(){
+  var inp = document.getElementById('sq-input');
+  var capA = document.getElementById('sq-cap-a');
+  if(!inp) return;
+  var content = (inp.value||'').trim();
+  if(!content){ showToast('请填写内容'); return; }
+  if(!_capId){ showToast('验证码未加载'); return; }
+  try{
+    var r = await fetch('/api/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-User-Token':getUserToken()},
+      body: JSON.stringify({ content: content, captcha_id: _capId, captcha_answer: capA.value })
+    });
+    var j = await r.json();
+    if(!r.ok){ showToast(j.error || '发送失败'); _refreshCaptcha(); return; }
+    inp.value = ''; capA.value = '';
+    _refreshCaptcha();
+    showToast('发送成功');
+    _loadSquareMessages();
+  }catch(e){ showToast('网络错误'); }
+}
+
+async function _delMsg(id){
+  _sqConfirm('确定删除这条留言吗？', async function(){
+    try{
+      var r = await fetch('/api/messages/'+id, {method:'DELETE', headers:{'X-User-Token':getUserToken()}});
+      var j = await r.json();
+      if(!r.ok){ showToast(j.error || '删除失败'); return; }
+      showToast('已删除');
+      _loadSquareMessages();
+    }catch(e){ showToast('网络错误'); }
+  });
+}
+
+async function _editMsg(id){
+  var list = await fetch('/api/messages').then(function(x){return x.json();}).catch(function(){return [];});
+  var cur = '';
+  for(var i=0;i<list.length;i++){ if(list[i].id===id){ cur = list[i].content; break; } }
+  _sqPrompt('修改留言', cur, async function(content){
+    if(!content){ showToast('内容不能为空'); return; }
+    try{
+      var r = await fetch('/api/messages/'+id, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json','X-User-Token':getUserToken()},
+        body: JSON.stringify({ content: content })
+      });
+      var j = await r.json();
+      if(!r.ok){ showToast(j.error || '修改失败'); return; }
+      showToast('已修改');
+      _loadSquareMessages();
+    }catch(e){ showToast('网络错误'); }
+  });
+}
+
+function _sqEnsureModal(){
+  if(document.getElementById('sq-modal')) return;
+  var d = document.createElement('div');
+  d.id = 'sq-modal';
+  d.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;align-items:center;justify-content:center;padding:20px';
+  d.innerHTML =
+    '<div style="background:#fff;border-radius:14px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.2)">'+
+      '<div id="sq-modal-title" style="padding:14px 18px;font-size:16px;font-weight:700;border-bottom:1px solid #eee"></div>'+
+      '<div id="sq-modal-body" style="padding:14px 18px"></div>'+
+      '<div style="display:flex;gap:8px;padding:12px 18px 16px">'+
+        '<button id="sq-modal-cancel" style="flex:1;padding:11px;border:none;border-radius:10px;background:#f0f1f5;color:#444;font-size:14px;font-weight:600;cursor:pointer">取消</button>'+
+        '<button id="sq-modal-ok" style="flex:1;padding:11px;border:none;border-radius:10px;background:var(--primary,#7CB342);color:#fff;font-size:14px;font-weight:600;cursor:pointer">确定</button>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(d);
+}
+
+function _sqConfirm(msg, onOk){
+  _sqEnsureModal();
+  document.getElementById('sq-modal-title').textContent = '提示';
+  document.getElementById('sq-modal-body').innerHTML = '<div style="font-size:14px;color:#444;line-height:1.6">'+escapeHtml(msg)+'</div>';
+  var m = document.getElementById('sq-modal');
+  m.style.display = 'flex';
+  document.getElementById('sq-modal-cancel').textContent = '取消';
+  document.getElementById('sq-modal-cancel').onclick = function(){ m.style.display='none'; };
+  document.getElementById('sq-modal-ok').onclick = function(){ m.style.display='none'; onOk && onOk(); };
+}
+
+function _sqPrompt(title, def, onOk){
+  _sqEnsureModal();
+  document.getElementById('sq-modal-title').textContent = title;
+  document.getElementById('sq-modal-body').innerHTML = '<textarea id="sq-modal-input" style="width:100%;min-height:90px;border:1px solid #e8eaf0;border-radius:10px;padding:10px;font-size:14px;resize:vertical;box-sizing:border-box;outline:none;font-family:inherit"></textarea>';
+  document.getElementById('sq-modal-input').value = def || '';
+  var m = document.getElementById('sq-modal');
+  m.style.display = 'flex';
+  document.getElementById('sq-modal-cancel').textContent = '取消';
+  document.getElementById('sq-modal-cancel').onclick = function(){ m.style.display='none'; };
+  document.getElementById('sq-modal-ok').onclick = function(){
+    var v = document.getElementById('sq-modal-input').value.trim();
+    m.style.display='none';
+    onOk && onOk(v);
+  };
+}
+
 function setToolTab(name){currentToolsTab=name;loadConfig()}
 
 // ============ 应用列表 ============
@@ -736,6 +948,12 @@ function openAuth(mode){
 }
 function closeAuth(){ document.getElementById('auth-modal').classList.remove('show'); }
 function toggleAuthMode(){ openAuth(authMode === 'login' ? 'register' : 'login'); }
+function _refreshSquareIfVisible(){
+  if(typeof currentToolsTab === 'undefined' || currentToolsTab !== '__square__') return;
+  var box = document.getElementById('tools-content');
+  if(box && typeof renderSquare === 'function') renderSquare(box);
+}
+
 async function doAuth(){
   const username = document.getElementById('auth-username').value.trim();
   const password = document.getElementById('auth-password').value;
@@ -749,6 +967,7 @@ async function doAuth(){
     closeAuth();
     showToast(authMode === 'login' ? '登录成功' : '注册成功');
     checkLogin();
+    _refreshSquareIfVisible();
     if(window.extras && extras.pull) extras.pull().then(function(){ if(extras.check) extras.check(); });
   }catch(e){ showToast('网络错误'); }
 }
@@ -756,6 +975,8 @@ async function doLogout(){
   const token = getUserToken();
   if(token){ try{ await fetch('/api/logout', {method:'POST', headers:{'X-User-Token': token}}); }catch(e){} }
   setUserToken('');
+  currentUser = null;
+  _refreshSquareIfVisible();
   currentUser = null;
   showToast('已退出登录');
   checkLogin();
