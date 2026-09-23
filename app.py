@@ -67,6 +67,15 @@ def init_db():
         db.execute('''CREATE TABLE IF NOT EXISTS apps(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT,description TEXT DEFAULT '',icon_url TEXT DEFAULT '',download_url TEXT DEFAULT '',category TEXT DEFAULT '工具',downloads INTEGER DEFAULT 0,featured INTEGER DEFAULT 0,created_at TEXT)''')
         db.execute('''CREATE TABLE IF NOT EXISTS config(key TEXT PRIMARY KEY,value TEXT)''')
         db.execute('''CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, token TEXT, created_at TEXT)''')
+        db.execute('''CREATE TABLE IF NOT EXISTS messages(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          username TEXT NOT NULL,
+          content TEXT NOT NULL,
+          created_at TEXT,
+          updated_at TEXT,
+          pinned INTEGER DEFAULT 0
+        )''')
         try: db.execute('ALTER TABLE users ADD COLUMN stats TEXT DEFAULT ""')
         except: pass
         if db.execute('SELECT COUNT(*) FROM apps').fetchone()[0] == 0:
