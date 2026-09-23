@@ -7,4 +7,4 @@ static/uploads/*
 venv/
 .venv/
 .DS_Store
-.bak_*
+*.bak_*
