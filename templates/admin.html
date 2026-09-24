@@ -727,7 +727,7 @@ async function loadConfig() {
   document.getElementById('my-page-title').value = config.my_title || '';
   document.getElementById('my-page-subtitle').value = config.my_subtitle || '';
   if (config.home_banners) tempData.banners = config.home_banners.map(b => ({ title: b.title||'', desc: b.desc||'', link: b.link||'', bg: b.image||b.bg||'', position: b.position||'center', color: b.color||'#f0f0f0' }));
-  if (config.notice_cards) tempData.notices = config.notice_cards.map(c => ({ title: c.title||'', desc: c.desc || '', content: c.content || '', bg: c.bg||c.image||'', position: c.position||'center', color: c.color||'#f0f0f0' }));
+  if (config.notice_cards) tempData.notices = config.notice_cards.map(c => ({ title: c.title||'', desc: c.desc || '', content: c.content || '', link: c.link||'', bg: c.bg||c.image||'', position: c.position||'center', color: c.color||'#f0f0f0' }));
   if (config.software_tabs) tempData.softwareTabs = config.software_tabs.split(',').map(s=>s.trim()).filter(s=>s);
   fillCategoryOptions();
   if (config.tools_tabs) {
