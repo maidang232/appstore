@@ -507,21 +507,48 @@ function renderSoftTabs(tabs){
 function openNotice(i){
   const c = config.notice_cards && config.notice_cards[i];
   if(!c) return;
-  const title = (c.title||'').replace(/\n/g, ' ');
-  const desc = c.desc || '';
-  const content = c.content || '';
-  document.getElementById('modal-title').innerText = title;
-  var html = '';
-  if(desc){
-    html += '<div style="font-size:13px;color:var(--text-sub);line-height:1.7;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--border)">' + escapeHtml(desc) + '</div>';
+  const content = c.content || "";
+  const hasContent = content.replace(/<[^>]*>/g,"").replace(/&nbsp;/g,"").trim().length > 0;
+  if (hasContent) { showNoticeDetail(c); return; }
+  if (c.link && c.link.trim()) {
+    let url = c.link.trim();
+    if(!/^https?:\/\//i.test(url)) url = "https://" + url;
+    rememberTabBeforeJump();
+    location.href = url;
+    return;
   }
-  if(content){
-    html += '<div style="font-size:14px;color:var(--text);line-height:1.8">' + content + '</div>';
-  } else if(!desc){
-    html += '<div style="font-size:14px;color:var(--text-sub);text-align:center;padding:20px 0">暂无详情</div>';
+  const title = (c.title||"").replace(/\n/g, " ");
+  const desc = c.desc || "";
+  if (desc) {
+    showInfo(title || "公告", desc);
+  } else {
+    showInfo(title || "公告", "暂无详情");
   }
-  document.getElementById('modal-body').innerHTML = html;
-  document.getElementById('modal').classList.add('show');
+}
+function showNoticeDetail(c){
+  document.getElementById("tool-detail-title").innerText = (c.title || "公告").replace(/\n/g, " ");
+  var html = "";
+  if(c.desc){
+    html += '<div style="font-size:13px;color:var(--text-sub);line-height:1.7;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--border)">' + escapeHtml(c.desc) + '</div>';
+  }
+  if(c.content){
+    html += '<div style="font-size:14px;color:var(--text);line-height:1.8">' + c.content + '</div>';
+  }
+  document.getElementById("tool-detail-body").innerHTML = html;
+  const footer = document.getElementById("tool-detail-footer");
+  const btn = document.getElementById("tool-detail-btn");
+  if (c.link && c.link.trim()) {
+    footer.style.display = "block";
+    btn.onclick = function(){
+      let url = c.link.trim();
+      if(!/^https?:\/\//i.test(url)) url = "https://" + url;
+      rememberTabBeforeJump();
+      location.href = url;
+    };
+  } else {
+    footer.style.display = "none";
+  }
+  document.getElementById("tool-detail-modal").style.display = "flex";
 }
 function renderToolsContent(tabs){
   const box=document.getElementById('tools-content');
